@@ -1,0 +1,7 @@
+com\pucpr\tcc\monolith\integration\AuthIntegrationTest.class
+com\pucpr\tcc\monolith\orders\entity\OrderStatusTransitionTest.class
+com\pucpr\tcc\monolith\products\service\ProductServiceTest.class
+com\pucpr\tcc\monolith\integration\ProductIntegrationTest.class
+com\pucpr\tcc\monolith\users\service\UserServiceTest.class
+com\pucpr\tcc\monolith\orders\service\OrderServiceTest.class
+com\pucpr\tcc\monolith\security\JwtServiceTest.class

@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E-commerce Monolito</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['IBM Plex Mono', 'monospace'],
+            sans: ['IBM Plex Sans', 'sans-serif'],
+          },
+          colors: {
+            ink:    { DEFAULT: '#0d1117', light: '#161b22' },
+            rail:   '#1f2937',
+            wire:   '#374151',
+            muted:  '#6b7280',
+            faint:  '#9ca3af',
+            paper:  '#f9fafb',
+            signal: { DEFAULT: '#22c55e', dim: 'rgba(34,197,94,0.12)', ring: 'rgba(34,197,94,0.3)' },
+            warn:   { DEFAULT: '#f59e0b', dim: 'rgba(245,158,11,0.12)' },
+            danger: { DEFAULT: '#ef4444', dim: 'rgba(239,68,68,0.12)' },
+            sky:    { DEFAULT: '#3b82f6', dim: 'rgba(59,130,246,0.12)' },
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'IBM Plex Sans', sans-serif; }
+    .font-mono { font-family: 'IBM Plex Mono', monospace; }
+
+    /* Toast */
+    #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: .5rem; }
+    .toast {
+      display: flex; align-items: flex-start; gap: .75rem;
+      padding: .85rem 1.1rem;
+      border-radius: 10px;
+      border: 1px solid;
+      font-size: .82rem;
+      max-width: 360px;
+      animation: slideUp .25s ease both;
+      backdrop-filter: blur(8px);
+    }
+    .toast.success { background: rgba(22,27,34,.95); border-color: rgba(34,197,94,.35); color: #86efac; }
+    .toast.error   { background: rgba(22,27,34,.95); border-color: rgba(239,68,68,.35);  color: #fca5a5; }
+    .toast.info    { background: rgba(22,27,34,.95); border-color: rgba(59,130,246,.35); color: #93c5fd; }
+    .toast-icon    { font-size: 1rem; flex-shrink: 0; margin-top: .05rem; }
+    .toast-msg     { line-height: 1.45; }
+
+    @keyframes slideUp   { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn    { from { opacity:0; } to { opacity:1; } }
+    @keyframes scaleIn   { from { opacity:0; transform:scale(.96); } to { opacity:1; transform:scale(1); } }
+
+    /* Nav tabs */
+    .tab-btn { position:relative; padding:.5rem 1rem; font-size:.8rem; font-family:'IBM Plex Mono',monospace;
+               letter-spacing:.04em; color:#6b7280; border-radius:6px; transition:all .18s; cursor:pointer; background:none; border:none; }
+    .tab-btn:hover { color:#e5e7eb; background:rgba(255,255,255,.05); }
+    .tab-btn.active { color:#22c55e; background:rgba(34,197,94,.1); }
+    .tab-btn.active::after { content:''; position:absolute; bottom:-1px; left:1rem; right:1rem; height:2px; background:#22c55e; border-radius:2px; }
+
+    /* Panels */
+    .panel { display:none; animation: scaleIn .2s ease both; }
+    .panel.active { display:block; }
+
+    /* Table */
+    .data-table { width:100%; border-collapse:collapse; font-size:.8rem; }
+    .data-table th { padding:.6rem .9rem; text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.7rem;
+                     letter-spacing:.1em; text-transform:uppercase; color:#6b7280; border-bottom:1px solid #1f2937; }
+    .data-table td { padding:.75rem .9rem; border-bottom:1px solid rgba(31,41,55,.6); color:#d1d5db; vertical-align:middle; }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tr:hover td { background:rgba(255,255,255,.02); }
+
+    /* Status badges */
+    .badge { display:inline-flex; align-items:center; gap:.3rem; padding:.25rem .6rem; border-radius:100px;
+             font-family:'IBM Plex Mono',monospace; font-size:.68rem; font-weight:500; letter-spacing:.04em; }
+    .badge-PENDENTE   { background:rgba(245,158,11,.15); color:#fbbf24; border:1px solid rgba(245,158,11,.25); }
+    .badge-CONFIRMADO { background:rgba(59,130,246,.15);  color:#60a5fa; border:1px solid rgba(59,130,246,.25); }
+    .badge-ENVIADO    { background:rgba(168,85,247,.15);  color:#c084fc; border:1px solid rgba(168,85,247,.25); }
+    .badge-ENTREGUE   { background:rgba(34,197,94,.15);   color:#4ade80; border:1px solid rgba(34,197,94,.25); }
+    .badge-CANCELADO  { background:rgba(239,68,68,.15);   color:#f87171; border:1px solid rgba(239,68,68,.25); }
+
+    /* Buttons */
+    .btn { display:inline-flex; align-items:center; gap:.4rem; padding:.5rem .9rem; border-radius:7px;
+           font-size:.78rem; font-weight:500; cursor:pointer; border:none; transition:all .15s; }
+    .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-primary   { background:#22c55e; color:#0d1117; }
+    .btn-primary:hover:not(:disabled)  { background:#16a34a; }
+    .btn-secondary { background:rgba(255,255,255,.06); color:#d1d5db; border:1px solid rgba(255,255,255,.1); }
+    .btn-secondary:hover:not(:disabled) { background:rgba(255,255,255,.1); }
+    .btn-danger    { background:rgba(239,68,68,.15); color:#f87171; border:1px solid rgba(239,68,68,.25); }
+    .btn-danger:hover:not(:disabled)   { background:rgba(239,68,68,.25); }
+    .btn-sky       { background:rgba(59,130,246,.15); color:#60a5fa; border:1px solid rgba(59,130,246,.25); }
+    .btn-sky:hover:not(:disabled)      { background:rgba(59,130,246,.25); }
+    .btn-sm { padding:.35rem .65rem; font-size:.72rem; }
+
+    /* Form inputs */
+    .field-label { display:block; font-family:'IBM Plex Mono',monospace; font-size:.68rem; letter-spacing:.1em;
+                   text-transform:uppercase; color:#6b7280; margin-bottom:.4rem; }
+    .field-input { width:100%; background:#161b22; border:1px solid #1f2937; border-radius:7px;
+                   padding:.6rem .8rem; font-size:.85rem; color:#e5e7eb; outline:none;
+                   transition:border-color .15s, box-shadow .15s; font-family:inherit; }
+    .field-input:focus { border-color:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.15); }
+    .field-input::placeholder { color:#374151; }
+    select.field-input option { background:#0d1117; }
+
+    /* Card */
+    .card { background:#161b22; border:1px solid #1f2937; border-radius:12px; }
+
+    /* Spinner */
+    .spin { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.2);
+            border-top-color:currentColor; border-radius:50%; animation:spin .6s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* Cart item */
+    .cart-item { display:flex; align-items:center; gap:.5rem; padding:.5rem .75rem;
+                 background:rgba(34,197,94,.07); border:1px solid rgba(34,197,94,.18); border-radius:8px; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#374151; border-radius:10px; }
+
+    /* Auth wall overlay */
+    #auth-wall { position:fixed; inset:0; background:#0d1117; z-index:100;
+                 display:flex; align-items:center; justify-content:center; animation:fadeIn .3s ease; }
+
+    /* Report stat card */
+    .stat-card { background:#161b22; border:1px solid #1f2937; border-radius:10px; padding:1.25rem 1.5rem; }
+    .stat-value { font-family:'IBM Plex Mono',monospace; font-size:1.6rem; font-weight:600; color:#e5e7eb; }
+    .stat-label { font-size:.72rem; color:#6b7280; margin-top:.2rem; font-family:'IBM Plex Mono',monospace;
+                  letter-spacing:.06em; text-transform:uppercase; }
+
+    /* Divider */
+    .section-title { font-family:'IBM Plex Mono',monospace; font-size:.7rem; letter-spacing:.15em;
+                     text-transform:uppercase; color:#4b5563; margin-bottom:.75rem; }
+  </style>
+</head>
+<body class="bg-ink text-gray-200 min-h-screen">
+
+<!-- ── TOAST CONTAINER ─────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     AUTH WALL
+══════════════════════════════════════════════════════ -->
+<div id="auth-wall">
+  <div class="w-full max-w-sm px-4">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center gap-2 mb-3">
+        <span class="text-signal font-mono text-xl font-semibold">E-commerce Monolito</span>
+        <span class="text-xs font-mono text-muted border border-wire px-1.5 py-0.5 rounded">v1.0</span>
+      </div>
+      <p class="text-sm text-muted">Sistema de Gestão de Pedidos</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="card p-6">
+      <p class="section-title mb-5">Autenticação</p>
+      <form id="login-form" class="space-y-4" onsubmit="event.preventDefault();">
+        <div>
+          <label class="field-label">E-mail</label>
+          <input type="email" id="auth-email" class="field-input" placeholder="admin@tcc.com" value="admin@tcc.com" required />
+        </div>
+        <div>
+          <label class="field-label">Senha</label>
+          <input type="password" id="auth-password" class="field-input" placeholder="••••••••" value="admin123" required />
+        </div>
+        <button type="submit" id="btn-login" class="btn btn-primary w-full justify-center mt-2">
+          Entrar
+        </button>
+      </form>
+      <div class="mt-4 pt-4 border-t border-wire">
+        <p class="text-xs text-muted mb-2 font-mono">Não tem conta?</p>
+        <button type="button" onclick="showRegisterForm()" class="btn btn-secondary w-full justify-center text-xs">
+          Criar conta
+        </button>
+      </div>
+    </div>
+
+    <!-- Register form (hidden by default) -->
+    <div id="register-box" class="card p-6 mt-3 hidden">
+      <p class="section-title mb-5">Novo Usuário</p>
+      <form id="register-form" class="space-y-4" onsubmit="event.preventDefault();">
+        <div>
+          <label class="field-label">Nome</label>
+          <input type="text" id="reg-name" class="field-input" placeholder="Seu nome" required />
+        </div>
+        <div>
+          <label class="field-label">E-mail</label>
+          <input type="email" id="reg-email" class="field-input" placeholder="voce@email.com" required />
+        </div>
+        <div>
+          <label class="field-label">Senha</label>
+          <input type="password" id="reg-password" class="field-input" placeholder="Mín. 6 caracteres" required />
+        </div>
+        <button type="submit" id="btn-register" class="btn btn-primary w-full justify-center">Cadastrar</button>
+      </form>
+    </div>
+
+    <p class="text-center text-xs text-muted mt-4 font-mono">localhost:8080/api</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MAIN APP (hidden until logged in)
+══════════════════════════════════════════════════════ -->
+<div id="app" class="hidden min-h-screen flex flex-col">
+
+  <!-- Top Bar -->
+  <header class="border-b border-rail bg-ink-light sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+      <!-- Brand -->
+      <div class="flex items-center gap-3 flex-shrink-0">
+        <span class="text-signal font-mono font-semibold text-base">GestorPed</span>
+        <span class="hidden sm:block text-xs font-mono text-muted">·</span>
+        <span id="user-badge" class="hidden sm:block text-xs font-mono text-muted"></span>
+      </div>
+
+      <!-- Nav Tabs -->
+      <nav class="flex items-center gap-1 overflow-x-auto">
+        <button class="tab-btn active" onclick="switchTab('products', this)">📦 Produtos</button>
+        <button class="tab-btn" onclick="switchTab('orders',   this)">🛒 Pedidos</button>
+        <button class="tab-btn" onclick="switchTab('reports',  this)">📊 Relatórios</button>
+      </nav>
+
+      <!-- Logout -->
+      <button onclick="logout()" class="btn btn-secondary btn-sm flex-shrink-0 text-xs">
+        Sair
+      </button>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
+
+    <!-- ════════════════════════════════════
+         PANEL: PRODUCTS
+    ════════════════════════════════════ -->
+    <div id="panel-products" class="panel active">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        <!-- Form -->
+        <div class="lg:col-span-1">
+          <div class="card p-5">
+            <p class="section-title">Novo Produto</p>
+            <form id="product-form" class="space-y-3" onsubmit="event.preventDefault();">
+              <div>
+                <label class="field-label">Nome</label>
+                <input type="text" id="p-name" class="field-input" placeholder="Ex: Notebook Dell" required />
+              </div>
+              <div>
+                <label class="field-label">Descrição</label>
+                <input type="text" id="p-desc" class="field-input" placeholder="Opcional" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="field-label">Preço (R$)</label>
+                  <input type="number" id="p-price" class="field-input" placeholder="0.00" step="0.01" min="0.01" required />
+                </div>
+                <div>
+                  <label class="field-label">Estoque</label>
+                  <input type="number" id="p-stock" class="field-input" placeholder="0" min="0" required />
+                </div>
+              </div>
+              <button type="submit" id="btn-create-product" class="btn btn-primary w-full justify-center mt-1">
+                Cadastrar Produto
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Product List -->
+        <div class="lg:col-span-2">
+          <div class="card overflow-hidden">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <p class="section-title mb-0">Catálogo</p>
+              <button onclick="loadProducts()" class="btn btn-secondary btn-sm text-xs">↻ Atualizar</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Produto</th>
+                    <th>Preço</th>
+                    <th>Estoque</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="product-table-body">
+                  <tr><td colspan="5" class="text-center text-muted py-8 font-mono text-xs">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         PANEL: ORDERS
+    ════════════════════════════════════ -->
+    <div id="panel-orders" class="panel">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        <!-- Checkout Builder -->
+        <div class="lg:col-span-1 space-y-4">
+          <div class="card p-5">
+            <p class="section-title">Adicionar ao Carrinho</p>
+            <div class="space-y-3">
+              <div>
+                <label class="field-label">Produto</label>
+                <select id="cart-product" class="field-input">
+                  <option value="">— selecione —</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label">Quantidade</label>
+                <input type="number" id="cart-qty" class="field-input" value="1" min="1" />
+              </div>
+              <button onclick="addToCart()" class="btn btn-secondary w-full justify-center">
+                + Adicionar
+              </button>
+            </div>
+          </div>
+
+          <!-- Cart -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <p class="section-title mb-0">Carrinho</p>
+              <button onclick="clearCart()" class="text-xs text-muted hover:text-danger transition-colors font-mono">limpar</button>
+            </div>
+            <div id="cart-items" class="space-y-2 min-h-[60px]">
+              <p class="text-xs text-muted font-mono">Nenhum item adicionado.</p>
+            </div>
+            <div class="mt-4 pt-4 border-t border-wire">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs text-muted font-mono">Total estimado</span>
+                <span id="cart-total" class="font-mono text-signal font-semibold text-sm">R$ 0,00</span>
+              </div>
+              <button onclick="submitOrder()" id="btn-checkout" class="btn btn-primary w-full justify-center">
+                Finalizar Pedido
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order List -->
+        <div class="lg:col-span-2">
+          <div class="card overflow-hidden">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <p class="section-title mb-0">Pedidos</p>
+              <button onclick="loadOrders()" class="btn btn-secondary btn-sm text-xs">↻ Atualizar</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Criado em</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="order-table-body">
+                  <tr><td colspan="5" class="text-center text-muted py-8 font-mono text-xs">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         PANEL: REPORTS
+    ════════════════════════════════════ -->
+    <div id="panel-reports" class="panel">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
+
+        <!-- Filter -->
+        <div class="lg:col-span-1">
+          <div class="card p-5">
+            <p class="section-title">Filtro de Período</p>
+            <form id="report-form" class="space-y-3" onsubmit="event.preventDefault();">
+              <div>
+                <label class="field-label">Data início</label>
+                <input type="date" id="report-start" class="field-input" required />
+              </div>
+              <div>
+                <label class="field-label">Data fim</label>
+                <input type="date" id="report-end" class="field-input" required />
+              </div>
+              <button type="submit" id="btn-report" class="btn btn-primary w-full justify-center mt-1">
+                Gerar Relatório
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="lg:col-span-3 space-y-5">
+          <!-- Stats -->
+          <div id="report-stats" class="hidden">
+            <p class="section-title">Sumário</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+              <div class="stat-card">
+                <div id="rpt-total" class="stat-value">—</div>
+                <div class="stat-label">Total de Pedidos</div>
+              </div>
+              <div class="stat-card">
+                <div id="rpt-delivered" class="stat-value text-signal">—</div>
+                <div class="stat-label">Entregues</div>
+              </div>
+              <div class="stat-card">
+                <div id="rpt-canceled" class="stat-value text-red-400">—</div>
+                <div class="stat-label">Cancelados</div>
+              </div>
+              <div class="stat-card">
+                <div id="rpt-revenue" class="stat-value text-yellow-400">—</div>
+                <div class="stat-label">Receita Total</div>
+              </div>
+            </div>
+
+            <!-- Order list in report -->
+            <div class="card overflow-hidden">
+              <p class="section-title p-5 pb-3 mb-0">Pedidos no Período</p>
+              <div class="overflow-x-auto">
+                <table class="data-table">
+                  <thead>
+                    <tr><th>ID</th><th>Usuário</th><th>Total</th><th>Status</th><th>Data</th></tr>
+                  </thead>
+                  <tbody id="report-orders-body">
+                    <tr><td colspan="5" class="text-center text-muted py-6 font-mono text-xs">Nenhum pedido.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div id="report-empty" class="card p-12 text-center">
+            <div class="text-4xl mb-3">📊</div>
+            <p class="text-sm text-muted font-mono">Selecione um período e clique em<br/>Gerar Relatório.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════ -->
+<script>
+/* ── CONFIG ──────────────────────────────────────────── */
+const BASE = 'http://localhost:8080/api';
+
+/* ── STATE ───────────────────────────────────────────── */
+let cart = [];           // { productId, name, qty, price }
+let products = [];       // cache of loaded products
+let currentUser = null;  // { userId, name, email, role, token }
+
+/* ── STORAGE HELPERS ─────────────────────────────────── */
+const getToken = ()       => localStorage.getItem('gp_token');
+const setToken = (t)      => localStorage.setItem('gp_token', t);
+const clearToken = ()     => localStorage.removeItem('gp_token');
+const getUser  = ()       => JSON.parse(localStorage.getItem('gp_user') || 'null');
+const setUser  = (u)      => localStorage.setItem('gp_user', JSON.stringify(u));
+const clearUser = ()      => localStorage.removeItem('gp_user');
+
+/* ── FETCH WRAPPER ───────────────────────────────────── */
+async function api(method, path, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = getToken();
+  const isAuthRoute = path.startsWith('/auth/');
+  if (token && !isAuthRoute) headers['Authorization'] = `Bearer ${token}`;
+
+  const opts = { method, headers };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+
+  let res;
+  try {
+    res = await fetch(BASE + path, opts);
+  } catch (e) {
+    throw new Error('Não foi possível conectar ao servidor. Verifique se o backend está rodando em localhost:8080.');
+  }
+
+  let data;
+  try { data = await res.json(); } catch { data = null; }
+
+  if (!res.ok) {
+    const msg = data?.message
+      || (data?.errors ? Object.values(data.errors).join(' · ') : null)
+      || `Erro ${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+/* ── TOAST ───────────────────────────────────────────── */
+function toast(type, message) {
+  const icons = { success: '✓', error: '✕', info: 'i' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type] || 'i'}</span><span class="toast-msg">${message}</span>`;
+  document.getElementById('toast-container').prepend(el);
+  setTimeout(() => el.remove(), 4500);
+}
+
+/* ── AUTH WALL ───────────────────────────────────────── */
+function showRegisterForm() {
+  document.getElementById('register-box').classList.toggle('hidden');
+}
+
+function showApp(user) {
+  currentUser = user;
+  document.getElementById('auth-wall').style.display = 'none';
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('user-badge').textContent = `${user.name} · ${user.role}`;
+  loadProducts();
+  loadOrders();
+  populateCartProductSelect();
+  // Pre-fill today and last month for report
+  const today = new Date().toISOString().split('T')[0];
+  const lastMonth = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+  document.getElementById('report-start').value = lastMonth;
+  document.getElementById('report-end').value   = today;
+}
+
+function logout() {
+  clearToken(); clearUser();
+  document.getElementById('auth-wall').style.display = 'flex';
+  document.getElementById('app').classList.add('hidden');
+  currentUser = null;
+  cart = []; products = [];
+  toast('info', 'Sessão encerrada.');
+}
+
+// Auto-login if token exists
+window.addEventListener('DOMContentLoaded', () => {
+  const u = getUser();
+  if (u && getToken()) { showApp(u); return; }
+});
+
+/* ── LOGIN ───────────────────────────────────────────── */
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btn-login');
+  btn.innerHTML = '<span class="spin"></span> Entrando…';
+  btn.disabled = true;
+  try {
+    const data = await api('POST', '/auth/login', {
+      email:    document.getElementById('auth-email').value,
+      password: document.getElementById('auth-password').value,
+    });
+    setToken(data.token);
+    setUser(data);
+    toast('success', `Bem-vindo(a), ${data.name}!`);
+    showApp(data);
+  } catch (err) {
+    toast('error', err.message);
+  } finally {
+    btn.innerHTML = 'Entrar';
+    btn.disabled = false;
+  }
+});
+
+/* ── REGISTER ────────────────────────────────────────── */
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const emailInput = document.getElementById('reg-email').value;
+  const btn = document.getElementById('btn-register');
+  btn.innerHTML = '<span class="spin"></span> Cadastrando…';
+  btn.disabled = true;
+  
+  try {
+    const data = await api('POST', '/auth/register', {
+      name:     document.getElementById('reg-name').value,
+      email:    emailInput,
+      password: document.getElementById('reg-password').value,
+    });
+    
+    setToken(data.token);
+    setUser(data);
+    toast('success', `Conta criada com sucesso! Bem-vindo(a), ${data.name}!`);
+    document.getElementById('register-form').reset();
+    showApp(data);
+  } catch (err) {
+    toast('error', err.message);
+  } finally {
+    btn.innerHTML = 'Cadastrar';
+    btn.disabled = false;
+  }
+});
+
+/* ── TAB NAVIGATION ──────────────────────────────────── */
+function switchTab(tab, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'orders')  { loadOrders(); populateCartProductSelect(); }
+  if (tab === 'products') loadProducts();
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRODUCTS
+═══════════════════════════════════════════════════════ */
+async function loadProducts() {
+  try {
+    products = await api('GET', '/products');
+    renderProductTable();
+    populateCartProductSelect();
+  } catch (err) {
+    toast('error', 'Erro ao carregar produtos: ' + err.message);
+  }
+}
+
+function renderProductTable() {
+  const tbody = document.getElementById('product-table-body');
+  if (!products.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-8 font-mono text-xs">Nenhum produto cadastrado.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = products.map(p => `
+    <tr>
+      <td class="font-mono text-muted text-xs">#${p.id}</td>
+      <td>
+        <div class="font-medium text-sm">${esc(p.name)}</div>
+        ${p.description ? `<div class="text-xs text-muted mt-0.5">${esc(p.description)}</div>` : ''}
+      </td>
+      <td class="font-mono text-signal text-sm">${fmt(p.price)}</td>
+      <td>
+        <span class="font-mono text-sm ${p.stockQuantity <= 0 ? 'text-red-400' : p.stockQuantity <= 5 ? 'text-yellow-400' : 'text-gray-300'}">
+          ${p.stockQuantity}
+        </span>
+      </td>
+      <td>
+        <button onclick="deleteProduct(${p.id})" class="btn btn-danger btn-sm">Remover</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('product-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btn-create-product');
+  btn.innerHTML = '<span class="spin"></span>';
+  btn.disabled = true;
+  try {
+    await api('POST', '/products', {
+      name:          document.getElementById('p-name').value,
+      description:   document.getElementById('p-desc').value,
+      price:         parseFloat(document.getElementById('p-price').value),
+      stockQuantity: parseInt(document.getElementById('p-stock').value),
+    });
+    toast('success', 'Produto cadastrado com sucesso!');
+    document.getElementById('product-form').reset();
+    await loadProducts();
+  } catch (err) {
+    toast('error', err.message);
+  } finally {
+    btn.innerHTML = 'Cadastrar Produto';
+    btn.disabled = false;
+  }
+});
+
+async function deleteProduct(id) {
+  if (!confirm('Remover este produto?')) return;
+  try {
+    await api('DELETE', `/products/${id}`);
+    toast('success', 'Produto removido.');
+    await loadProducts();
+  } catch (err) {
+    toast('error', err.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   CART
+═══════════════════════════════════════════════════════ */
+function populateCartProductSelect() {
+  const sel = document.getElementById('cart-product');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— selecione —</option>';
+  products.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.name} — ${fmt(p.price)} (estoque: ${p.stockQuantity})`;
+    sel.appendChild(opt);
+  });
+  if (prev) sel.value = prev;
+}
+
+function addToCart() {
+  const pid = parseInt(document.getElementById('cart-product').value);
+  const qty = parseInt(document.getElementById('cart-qty').value) || 1;
+  if (!pid) { toast('info', 'Selecione um produto.'); return; }
+  const product = products.find(p => p.id === pid);
+  if (!product) return;
+
+  const existing = cart.find(c => c.productId === pid);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({ productId: pid, name: product.name, qty, price: product.price });
+  }
+  renderCart();
+  document.getElementById('cart-qty').value = 1;
+  toast('info', `${product.name} adicionado ao carrinho.`);
+}
+
+function removeFromCart(idx) {
+  cart.splice(idx, 1);
+  renderCart();
+}
+
+function clearCart() {
+  cart = [];
+  renderCart();
+}
+
+function renderCart() {
+  const container = document.getElementById('cart-items');
+  if (!cart.length) {
+    container.innerHTML = `<p class="text-xs text-muted font-mono">Nenhum item adicionado.</p>`;
+    document.getElementById('cart-total').textContent = 'R$ 0,00';
+    return;
+  }
+  container.innerHTML = cart.map((item, i) => `
+    <div class="cart-item">
+      <div class="flex-1 min-w-0">
+        <p class="text-xs font-medium truncate">${esc(item.name)}</p>
+        <p class="text-xs text-muted font-mono">${item.qty}× ${fmt(item.price)}</p>
+      </div>
+      <span class="text-xs font-mono text-signal">${fmt(item.price * item.qty)}</span>
+      <button onclick="removeFromCart(${i})" class="text-muted hover:text-danger ml-1 transition-colors text-sm leading-none">✕</button>
+    </div>
+  `).join('');
+  const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+  document.getElementById('cart-total').textContent = fmt(total);
+}
+
+async function submitOrder() {
+  if (!cart.length) { toast('info', 'Carrinho vazio.'); return; }
+  const btn = document.getElementById('btn-checkout');
+  btn.innerHTML = '<span class="spin"></span> Processando…';
+  btn.disabled = true;
+  try {
+    const order = await api('POST', '/orders', {
+      items: cart.map(c => ({ productId: c.productId, quantity: c.qty }))
+    });
+    toast('success', `Pedido #${order.id} criado! Total: ${fmt(order.totalAmount)}`);
+    clearCart();
+    await loadOrders();
+    await loadProducts();
+  } catch (err) {
+    toast('error', err.message);
+  } finally {
+    btn.innerHTML = 'Finalizar Pedido';
+    btn.disabled = false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ORDERS
+═══════════════════════════════════════════════════════ */
+const STATUS_FLOW = {
+  PENDENTE:   { next: 'CONFIRMADO', label: 'Confirmar' },
+  CONFIRMADO: { next: 'ENVIADO',    label: 'Marcar Enviado' },
+  ENVIADO:    { next: 'ENTREGUE',   label: 'Marcar Entregue' },
+};
+
+async function loadOrders() {
+  const tbody = document.getElementById('order-table-body');
+  try {
+    const isAdmin = currentUser?.role === 'ADMIN';
+    const orders  = await api('GET', isAdmin ? '/orders' : '/orders/my-orders');
+    if (!orders.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-8 font-mono text-xs">Nenhum pedido encontrado.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = orders.map(o => {
+      const flow  = STATUS_FLOW[o.status];
+      const items = o.items.map(i => `${i.quantity}× ${esc(i.productName)}`).join(', ');
+      return `
+        <tr>
+          <td>
+            <span class="font-mono text-xs text-muted">#${o.id}</span>
+            <div class="text-xs text-muted mt-0.5 max-w-[140px] truncate" title="${items}">${items}</div>
+          </td>
+          <td class="font-mono text-signal text-sm">${fmt(o.totalAmount)}</td>
+          <td><span class="badge badge-${o.status}">${o.status}</span></td>
+          <td class="font-mono text-xs text-muted">${fmtDate(o.createdAt)}</td>
+          <td>
+            <div class="flex flex-wrap gap-1">
+              ${flow ? `<button onclick="advanceStatus(${o.id}, '${flow.next}')" class="btn btn-sky btn-sm">${flow.label}</button>` : ''}
+              ${['PENDENTE','CONFIRMADO'].includes(o.status)
+                ? `<button onclick="cancelOrder(${o.id})" class="btn btn-danger btn-sm">Cancelar</button>`
+                : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-400 py-8 font-mono text-xs">${err.message}</td></tr>`;
+  }
+}
+
+async function advanceStatus(orderId, newStatus) {
+  try {
+    await api('PATCH', `/orders/${orderId}/status`, { newStatus });
+    toast('success', `Pedido #${orderId} → ${newStatus}`);
+    await loadOrders();
+  } catch (err) {
+    toast('error', err.message);
+  }
+}
+
+async function cancelOrder(orderId) {
+  if (!confirm(`Cancelar o pedido #${orderId}? O estoque será devolvido.`)) return;
+  try {
+    await api('PATCH', `/orders/${orderId}/cancel`);
+    toast('success', `Pedido #${orderId} cancelado.`);
+    await loadOrders();
+    await loadProducts();
+  } catch (err) {
+    toast('error', err.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   REPORTS
+═══════════════════════════════════════════════════════ */
+document.getElementById('report-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btn-report');
+  btn.innerHTML = '<span class="spin"></span> Gerando…';
+  btn.disabled = true;
+
+  const startDate = document.getElementById('report-start').value;
+  const endDate   = document.getElementById('report-end').value;
+
+  try {
+    const r = await api('GET', `/reports/sales?startDate=${startDate}&endDate=${endDate}`);
+
+    document.getElementById('report-empty').classList.add('hidden');
+    document.getElementById('report-stats').classList.remove('hidden');
+
+    document.getElementById('rpt-total').textContent     = r.totalOrders;
+    document.getElementById('rpt-delivered').textContent = r.deliveredOrders;
+    document.getElementById('rpt-canceled').textContent  = r.canceledOrders;
+    document.getElementById('rpt-revenue').textContent   = fmt(r.totalRevenue);
+
+    const tbody = document.getElementById('report-orders-body');
+    if (!r.orders?.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-6 font-mono text-xs">Nenhum pedido no período.</td></tr>`;
+    } else {
+      tbody.innerHTML = r.orders.map(o => `
+        <tr>
+          <td class="font-mono text-xs text-muted">#${o.id}</td>
+          <td class="text-xs text-muted">#${o.userId}</td>
+          <td class="font-mono text-signal text-sm">${fmt(o.totalAmount)}</td>
+          <td><span class="badge badge-${o.status}">${o.status}</span></td>
+          <td class="font-mono text-xs text-muted">${fmtDate(o.createdAt)}</td>
+        </tr>
+      `).join('');
+    }
+    toast('success', `Relatório gerado: ${r.totalOrders} pedidos encontrados.`);
+  } catch (err) {
+    toast('error', err.message);
+  } finally {
+    btn.innerHTML = 'Gerar Relatório';
+    btn.disabled = false;
+  }
+});
+
+/* ═══════════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════════ */
+function fmt(v) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0);
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit' });
+}
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
