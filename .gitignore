@@ -1,0 +1,17 @@
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Outros diretórios de trabalho neste computador que não fazem parte deste projeto
+/ecommerce-tcc-v2/
