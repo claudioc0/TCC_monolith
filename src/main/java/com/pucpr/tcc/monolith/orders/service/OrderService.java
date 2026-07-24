@@ -8,11 +8,13 @@ import com.pucpr.tcc.monolith.orders.entity.OrderItem;
 import com.pucpr.tcc.monolith.orders.entity.OrderStatus;
 import com.pucpr.tcc.monolith.orders.exception.OrderNotFoundException;
 import com.pucpr.tcc.monolith.orders.repository.OrderRepository;
-import com.pucpr.tcc.monolith.products.entity.Product;
+import com.pucpr.tcc.monolith.products.dto.ProductResponse;
 import com.pucpr.tcc.monolith.products.service.ProductService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -53,7 +55,7 @@ public class OrderService {
 
         for (OrderRequest.OrderItemRequest itemReq : request.items()) {
             // Busca o produto (lança ProductNotFoundException se não existir)
-            Product product = productService.getProductOrThrow(itemReq.productId());
+            ProductResponse product = productService.findById(itemReq.productId());
 
             // Desconta o estoque (lança InsufficientStockException se insuficiente)
             productService.decreaseStock(itemReq.productId(), itemReq.quantity());
@@ -61,9 +63,9 @@ public class OrderService {
             // Cria o item com snapshot do preço atual
             OrderItem item = new OrderItem(
                 order,
-                product.getId(),
-                product.getName(),
-                product.getPrice(),
+                product.id(),
+                product.name(),
+                product.price(),
                 itemReq.quantity()
             );
             order.addItem(item);
@@ -93,6 +95,35 @@ public class OrderService {
                 .stream()
                 .map(OrderResponse::from)
                 .toList();
+    }
+
+    // ── Consultas para Relatórios (usadas pelo ReportService) ──
+
+    /**
+     * Lista pedidos criados dentro de um período.
+     * Único ponto de acesso de outros domínios (ex.: reports) ao histórico de pedidos.
+     */
+    @Transactional(readOnly = true)
+    public List<OrderResponse> findByPeriod(LocalDateTime start, LocalDateTime end) {
+        return orderRepository.findByCreatedAtBetween(start, end)
+                .stream()
+                .map(OrderResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public long countDeliveredByPeriod(LocalDateTime start, LocalDateTime end) {
+        return orderRepository.countByStatusAndPeriod(OrderStatus.ENTREGUE, start, end);
+    }
+
+    @Transactional(readOnly = true)
+    public long countCanceledByPeriod(LocalDateTime start, LocalDateTime end) {
+        return orderRepository.countByStatusAndPeriod(OrderStatus.CANCELADO, start, end);
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal sumRevenueByPeriod(LocalDateTime start, LocalDateTime end) {
+        return orderRepository.sumRevenueByPeriod(start, end);
     }
 
     // ── Atualização de Status ─────────────────────────────────

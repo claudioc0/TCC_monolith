@@ -85,6 +85,14 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- ArchUnit — testes de arquitetura -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.2.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -92,6 +100,64 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- JaCoCo — Branch Coverage -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.11</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- PITest — Mutation Score -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.15.8</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>1.2.1</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <targetClasses>
+                        <param>com.pucpr.tcc.monolith.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>com.pucpr.tcc.monolith.*</param>
+                    </targetTests>
+                    <excludedClasses>
+                        <param>com.pucpr.tcc.monolith.MonolithApplication</param>
+                        <param>com.pucpr.tcc.monolith.security.DatabaseSeeder</param>
+                        <param>com.pucpr.tcc.monolith.architecture.*</param>
+                    </excludedClasses>
+                    <excludedTestClasses>
+                        <param>com.pucpr.tcc.monolith.architecture.*</param>
+                    </excludedTestClasses>
+                    <outputFormats>
+                        <param>HTML</param>
+                        <param>XML</param>
+                    </outputFormats>
+                    <mutationThreshold>0</mutationThreshold>
+                    <timestampedReports>false</timestampedReports>
+                </configuration>
             </plugin>
         </plugins>
     </build>

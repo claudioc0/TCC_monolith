@@ -122,8 +122,9 @@ public class ProductService {
     /**
      * Recupera a entidade Product ou lança {@link ProductNotFoundException}.
      * Reutilizado internamente para centralizar a lógica de "not found".
+     * Privado: outros domínios devem usar {@link #findById(Long)}, que retorna um DTO.
      */
-    public Product getProductOrThrow(Long id) {
+    private Product getProductOrThrow(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
     }
