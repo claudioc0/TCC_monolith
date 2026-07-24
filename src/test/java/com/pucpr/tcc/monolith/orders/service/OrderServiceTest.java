@@ -8,7 +8,7 @@ import com.pucpr.tcc.monolith.orders.entity.OrderStatus;
 import com.pucpr.tcc.monolith.orders.exception.InvalidStatusTransitionException;
 import com.pucpr.tcc.monolith.orders.exception.OrderNotFoundException;
 import com.pucpr.tcc.monolith.orders.repository.OrderRepository;
-import com.pucpr.tcc.monolith.products.entity.Product;
+import com.pucpr.tcc.monolith.products.dto.ProductResponse;
 import com.pucpr.tcc.monolith.products.service.ProductService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,8 +34,8 @@ class OrderServiceTest {
     @Test
     @DisplayName("create deve criar pedido descontando estoque")
     void createShouldCreateOrderAndDecreaseStock() {
-        Product product = new Product("Mouse", "Gamer", new BigDecimal("150.00"), 5);
-        when(productService.getProductOrThrow(1L)).thenReturn(product);
+        var product = new ProductResponse(1L, "Mouse", "Gamer", new BigDecimal("150.00"), 5, null, null);
+        when(productService.findById(1L)).thenReturn(product);
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var request = new OrderRequest(List.of(new OrderItemRequest(1L, 2)));

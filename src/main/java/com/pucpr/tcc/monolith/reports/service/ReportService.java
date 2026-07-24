@@ -1,8 +1,7 @@
 package com.pucpr.tcc.monolith.reports.service;
 
 import com.pucpr.tcc.monolith.orders.dto.OrderResponse;
-import com.pucpr.tcc.monolith.orders.entity.OrderStatus;
-import com.pucpr.tcc.monolith.orders.repository.OrderRepository;
+import com.pucpr.tcc.monolith.orders.service.OrderService;
 import com.pucpr.tcc.monolith.reports.dto.SalesReportResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,15 +17,18 @@ import java.util.List;
  *
  * Recebe uma data de início e fim (LocalDate) e retorna um
  * sumário de pedidos no período com métricas de negócio.
+ *
+ * Agrega dados exclusivamente via {@link OrderService} — nunca acessa
+ * o repositório ou as entidades do domínio de pedidos diretamente.
  */
 @Service
 @Transactional(readOnly = true)
 public class ReportService {
 
-    private final OrderRepository orderRepository;
+    private final OrderService orderService;
 
-    public ReportService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
+    public ReportService(OrderService orderService) {
+        this.orderService = orderService;
     }
 
     /**
@@ -45,18 +47,12 @@ public class ReportService {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end   = endDate.atTime(LocalTime.MAX);
 
-        // Busca todos os pedidos do período
-        List<OrderResponse> orders = orderRepository
-                .findByCreatedAtBetween(start, end)
-                .stream()
-                .map(OrderResponse::from)
-                .toList();
+        List<OrderResponse> orders = orderService.findByPeriod(start, end);
 
-        long totalOrders    = orders.size();
-        long deliveredOrders = orderRepository.countByStatusAndPeriod(OrderStatus.ENTREGUE, start, end);
-        long canceledOrders  = orderRepository.countByStatusAndPeriod(OrderStatus.CANCELADO, start, end);
-
-        BigDecimal totalRevenue = orderRepository.sumRevenueByPeriod(start, end);
+        long totalOrders     = orders.size();
+        long deliveredOrders = orderService.countDeliveredByPeriod(start, end);
+        long canceledOrders  = orderService.countCanceledByPeriod(start, end);
+        BigDecimal totalRevenue = orderService.sumRevenueByPeriod(start, end);
 
         return new SalesReportResponse(
             startDate,
