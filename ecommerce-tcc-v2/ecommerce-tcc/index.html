@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E-commerce TCC — Monólito</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── TOKENS ─────────────────────────────────────────────── */
+    :root {
+      --bg:           #0a0c10;
+      --surface:      #111318;
+      --surface-2:    #181b22;
+      --border:       rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.18);
+
+      --blue:         #3d8bff;
+      --blue-dim:     rgba(61,139,255,0.12);
+      --blue-glow:    rgba(61,139,255,0.35);
+
+      --green:        #2ecc8a;
+      --green-dim:    rgba(46,204,138,0.12);
+      --green-glow:   rgba(46,204,138,0.35);
+
+      --red:          #ff5b5b;
+      --red-dim:      rgba(255,91,91,0.12);
+      --red-glow:     rgba(255,91,91,0.35);
+
+      --amber:        #f5a623;
+      --amber-dim:    rgba(245,166,35,0.12);
+      --amber-glow:   rgba(245,166,35,0.35);
+
+      --text-1:       #f0f2f7;
+      --text-2:       #8b90a0;
+      --text-3:       #565b6a;
+
+      --radius:       14px;
+      --radius-sm:    8px;
+      --font-display: 'Syne', sans-serif;
+      --font-mono:    'DM Mono', monospace;
+      --font-body:    'DM Sans', sans-serif;
+
+      --base: http://localhost:8080;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* grid texture */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ambient glow — amber tint to differentiate from microservices version */
+    .glow-anchor {
+      position: fixed; top: -120px; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 400px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(245,166,35,0.10) 0%, transparent 65%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── LAYOUT ─────────────────────────────────────────────── */
+    .wrapper {
+      position: relative; z-index: 1;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 3rem 2rem 5rem;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 3rem;
+      animation: fadeUp .6s ease both;
+    }
+
+    .header-left h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3vw, 2.3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .header-left h1 span { color: var(--amber); }
+
+    .header-left p {
+      margin-top: .45rem;
+      font-size: .85rem;
+      color: var(--text-3);
+      font-family: var(--font-mono);
+      letter-spacing: .03em;
+    }
+
+    /* single-service badge */
+    .arch-badge {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .4rem 1rem;
+      border-radius: 100px;
+      border: 1px solid rgba(245,166,35,0.25);
+      background: var(--amber-dim);
+      font-size: .75rem;
+      font-family: var(--font-mono);
+      color: var(--amber);
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: .25rem;
+    }
+
+    .arch-badge .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--text-3);
+      transition: background .3s, box-shadow .3s;
+    }
+    .arch-badge.online .dot {
+      background: var(--amber);
+      box-shadow: 0 0 7px var(--amber);
+    }
+
+    /* ── GRID ───────────────────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    /* ── CARD ───────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color .25s, transform .25s, box-shadow .25s;
+      animation: fadeUp .6s ease both;
+    }
+    .card:hover { border-color: var(--border-hover); transform: translateY(-3px); }
+
+    .card:nth-child(1) { animation-delay: .1s; }
+    .card:nth-child(2) { animation-delay: .2s; }
+    .card:nth-child(3) { animation-delay: .3s; }
+
+    .card--blue:hover  { box-shadow: 0 8px 40px var(--blue-glow);  }
+    .card--green:hover { box-shadow: 0 8px 40px var(--green-glow); }
+    .card--red:hover   { box-shadow: 0 8px 40px var(--red-glow);   }
+
+    /* ── CARD HEADER ────────────────────────────────────────── */
+    .card-top {
+      padding: 1.35rem 1.5rem 1.1rem;
+      display: flex; align-items: flex-start; gap: .9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-sm);
+      display: grid; place-items: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+    .card--blue  .card-icon { background: var(--blue-dim);  }
+    .card--green .card-icon { background: var(--green-dim); }
+    .card--red   .card-icon { background: var(--red-dim);   }
+
+    .card-meta h2 {
+      font-family: var(--font-display);
+      font-size: 1rem; font-weight: 700;
+      letter-spacing: -.02em; line-height: 1.2;
+    }
+    .card-meta p {
+      margin-top: .2rem;
+      font-size: .75rem; color: var(--text-3);
+      font-family: var(--font-mono);
+    }
+    .card--blue  .card-meta h2 { color: var(--blue);  }
+    .card--green .card-meta h2 { color: var(--green); }
+    .card--red   .card-meta h2 { color: var(--red);   }
+
+    /* ── CARD BODY ──────────────────────────────────────────── */
+    .card-body {
+      padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+
+    /* ── FIELDS ─────────────────────────────────────────────── */
+    .field label {
+      display: block;
+      font-size: .72rem; font-family: var(--font-mono);
+      color: var(--text-3); letter-spacing: .08em;
+      text-transform: uppercase; margin-bottom: .45rem;
+    }
+    .field input {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .7rem .9rem;
+      font-family: var(--font-body); font-size: .875rem;
+      color: var(--text-1); outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-appearance: none;
+    }
+    .field input::placeholder { color: var(--text-3); }
+    .card--blue  .field input:focus { border-color: var(--blue);  box-shadow: 0 0 0 3px var(--blue-dim);  }
+    .card--green .field input:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-dim); }
+    .card--red   .field input:focus { border-color: var(--red);   box-shadow: 0 0 0 3px var(--red-dim);   }
+
+    /* ── BUTTONS ─────────────────────────────────────────────── */
+    .btn {
+      width: 100%; padding: .82rem;
+      border: none; border-radius: var(--radius-sm);
+      font-family: var(--font-display); font-size: .9rem;
+      font-weight: 700; letter-spacing: -.01em;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+      margin-top: .35rem;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+    }
+    .btn:hover  { opacity: .9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); opacity: .8; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .btn--blue  { background: var(--blue);  color: #fff; }
+    .btn--green { background: var(--green); color: #fff; }
+    .btn--red   { background: var(--red);   color: #fff; }
+    .btn--blue:hover  { box-shadow: 0 4px 18px var(--blue-glow);  }
+    .btn--green:hover { box-shadow: 0 4px 18px var(--green-glow); }
+    .btn--red:hover   { box-shadow: 0 4px 18px var(--red-glow);   }
+
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+    }
+
+    /* ── MONOLITH INFO BANNER ───────────────────────────────── */
+    .info-banner {
+      margin-bottom: 2rem;
+      padding: .9rem 1.25rem;
+      background: var(--amber-dim);
+      border: 1px solid rgba(245,166,35,0.2);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; gap: .75rem;
+      font-family: var(--font-mono); font-size: .78rem;
+      color: var(--amber);
+      animation: fadeUp .6s .05s ease both;
+    }
+    .info-banner strong { color: var(--text-1); }
+
+    /* ── LOG PANEL ──────────────────────────────────────────── */
+    .log-section {
+      margin-top: 2rem;
+      animation: fadeUp .6s .4s ease both;
+    }
+    .log-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: .75rem;
+    }
+    .log-header span {
+      font-family: var(--font-mono); font-size: .75rem;
+      color: var(--text-3); text-transform: uppercase; letter-spacing: .1em;
+    }
+    .clear-btn {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-3); font-family: var(--font-mono); font-size: .7rem;
+      padding: .25rem .65rem; cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .clear-btn:hover { border-color: var(--border-hover); color: var(--text-2); }
+
+    .log-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-height: 160px; max-height: 320px;
+      overflow-y: auto; padding: 1rem;
+      display: flex; flex-direction: column; gap: .6rem;
+    }
+    .log-box::-webkit-scrollbar { width: 5px; }
+    .log-box::-webkit-scrollbar-track { background: transparent; }
+    .log-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    .log-empty {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: .78rem; color: var(--text-3);
+    }
+    .log-entry {
+      border-radius: var(--radius-sm); padding: .75rem 1rem;
+      font-family: var(--font-mono); font-size: .78rem; line-height: 1.55;
+      border-left: 3px solid transparent;
+      animation: slideIn .25s ease both;
+    }
+    .log-entry.success { background: var(--green-dim); border-left-color: var(--green); color: var(--green); }
+    .log-entry.error   { background: var(--red-dim);   border-left-color: var(--red);   color: #ff8a8a; }
+    .log-entry .log-time { color: var(--text-3); margin-right: .5rem; }
+    .log-entry pre {
+      margin-top: .45rem; white-space: pre-wrap; word-break: break-all;
+      color: var(--text-2); font-size: .73rem;
+    }
+
+    /* ── ANIMATIONS ─────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0);    }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="glow-anchor"></div>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <h1>E-commerce <span>TCC</span><br>Painel de Controle</h1>
+      <p>// monolith · spring boot 3.2.0 · java 17</p>
+    </div>
+    <div class="arch-badge" id="serviceBadge">
+      <span class="dot"></span>
+      :8080 · monolith
+    </div>
+  </header>
+
+
+  <!-- CARDS -->
+  <div class="grid">
+
+    <!-- CLIENTE -->
+    <div class="card card--blue">
+      <div class="card-top">
+        <div class="card-icon">👤</div>
+        <div class="card-meta">
+          <h2>Cadastrar Cliente</h2>
+          <p>POST /api/customers · :8080</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <form id="customerForm">
+          <div class="field">
+            <label>Nome completo</label>
+            <input type="text" id="customerName" placeholder="João Silva" required />
+          </div>
+          <div class="field">
+            <label>E-mail</label>
+            <input type="email" id="customerEmail" placeholder="joao@email.com" required />
+          </div>
+          <button type="submit" class="btn btn--blue" id="btnCustomer">
+            <span class="spinner" id="spnCustomer"></span>
+            Criar Cliente
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- PRODUTO -->
+    <div class="card card--green">
+      <div class="card-top">
+        <div class="card-icon">📦</div>
+        <div class="card-meta">
+          <h2>Cadastrar Produto</h2>
+          <p>POST /api/products · :8080</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <form id="productForm">
+          <div class="field">
+            <label>Nome do produto</label>
+            <input type="text" id="productName" placeholder="Notebook Dell" required />
+          </div>
+          <div class="field">
+            <label>Preço (R$)</label>
+            <input type="number" step="0.01" id="productPrice" placeholder="2500.00" required />
+          </div>
+          <div class="field">
+            <label>Estoque inicial</label>
+            <input type="number" id="productStock" placeholder="10" required />
+          </div>
+          <button type="submit" class="btn btn--green" id="btnProduct">
+            <span class="spinner" id="spnProduct"></span>
+            Criar Produto
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- CHECKOUT -->
+    <div class="card card--red">
+      <div class="card-top">
+        <div class="card-icon">🛒</div>
+        <div class="card-meta">
+          <h2>Realizar Checkout</h2>
+          <p>POST /api/orders/checkout · :8080</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <form id="checkoutForm">
+          <div class="field">
+            <label>ID do Cliente</label>
+            <input type="number" id="orderCustomerId" placeholder="1" required />
+          </div>
+          <div class="field">
+            <label>ID do Produto</label>
+            <input type="number" id="orderProductId" placeholder="1" required />
+          </div>
+          <div class="field">
+            <label>Quantidade</label>
+            <input type="number" id="orderQuantity" placeholder="2" required />
+          </div>
+          <button type="submit" class="btn btn--red" id="btnOrder">
+            <span class="spinner" id="spnOrder"></span>
+            Comprar
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- LOG PANEL -->
+  <div class="log-section">
+    <div class="log-header">
+      <span>// response log</span>
+      <button class="clear-btn" onclick="clearLog()">limpar</button>
+    </div>
+    <div class="log-box" id="logBox">
+      <div class="log-empty" id="logEmpty">Nenhuma requisição ainda...</div>
+    </div>
+  </div>
+
+</div><!-- /wrapper -->
+
+<script>
+  const BASE = 'http://localhost:8080';
+
+  /* ── SERVICE STATUS PING ──────────────────────────────── */
+  async function pingMonolith() {
+    try {
+      await fetch(`${BASE}/api/products`, { signal: AbortSignal.timeout(2500) });
+      document.getElementById('serviceBadge').classList.add('online');
+    } catch { /* offline */ }
+  }
+  pingMonolith();
+
+  /* ── LOG ─────────────────────────────────────────────── */
+  function addLog(type, label, data) {
+    const box   = document.getElementById('logBox');
+    const empty = document.getElementById('logEmpty');
+    if (empty) empty.remove();
+
+    const time  = new Date().toLocaleTimeString('pt-BR');
+    const json  = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.innerHTML = `
+      <span class="log-time">[${time}]</span>
+      <strong>${label}</strong>
+      <pre>${json}</pre>
+    `;
+    box.prepend(entry);
+  }
+
+  function clearLog() {
+    document.getElementById('logBox').innerHTML =
+      '<div class="log-empty" id="logEmpty">Nenhuma requisição ainda...</div>';
+  }
+
+  /* ── GENERIC POST ────────────────────────────────────── */
+  async function postData(url, data, btnId, spinnerId, label) {
+    const btn = document.getElementById(btnId);
+    const spn = document.getElementById(spinnerId);
+    btn.disabled = true;
+    spn.style.display = 'block';
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      let body;
+      try { body = await res.json(); } catch { body = await res.text(); }
+      if (res.ok || res.status === 201) {
+        addLog('success', `✅ ${label}`, body);
+      } else {
+        addLog('error', `❌ ${label} [${res.status}]`, body);
+      }
+    } catch (err) {
+      addLog('error', `❌ Conexão recusada — ${url}`, err.message);
+    } finally {
+      btn.disabled = false;
+      spn.style.display = 'none';
+    }
+  }
+
+  /* ── FORMS ───────────────────────────────────────────── */
+  document.getElementById('customerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    postData(`${BASE}/api/customers`,
+      { name: document.getElementById('customerName').value,
+        email: document.getElementById('customerEmail').value },
+      'btnCustomer', 'spnCustomer', 'Cliente cadastrado');
+    this.reset();
+  });
+
+  document.getElementById('productForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    postData(`${BASE}/api/products`,
+      { name: document.getElementById('productName').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        stockQuantity: parseInt(document.getElementById('productStock').value, 10) },
+      'btnProduct', 'spnProduct', 'Produto cadastrado');
+    this.reset();
+  });
+
+  document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    postData(`${BASE}/api/orders/checkout`,
+      { customerId: parseInt(document.getElementById('orderCustomerId').value, 10),
+        items: [{ productId: parseInt(document.getElementById('orderProductId').value, 10),
+                  quantity:  parseInt(document.getElementById('orderQuantity').value, 10) }] },
+      'btnOrder', 'spnOrder', 'Checkout realizado');
+    this.reset();
+  });
+</script>
+</body>
+</html>
