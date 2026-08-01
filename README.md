@@ -1,6 +1,15 @@
 # E-commerce TCC — Sistema de Gestão de Pedidos
 
+![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?logo=spring&logoColor=white)
+![JUnit5](https://img.shields.io/badge/tests-JUnit5-25A162?logo=junit5&logoColor=white)
+![ArchUnit](https://img.shields.io/badge/architecture-ArchUnit-blue)
+
 Backend completo com Spring Boot 3.2, H2, Spring Security e JWT.
+
+Implementação **monolítica** do experimento controlado de Engenharia de Software
+Experimental do meu TCC (PUCPR), comparada a uma versão equivalente em
+microsserviços: [`TCC_microservice`](https://github.com/claudioc0/TCC_microservice).
 
 ## Stack
 
