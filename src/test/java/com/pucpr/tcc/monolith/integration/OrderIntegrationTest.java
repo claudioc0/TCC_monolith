@@ -64,7 +64,12 @@ class OrderIntegrationTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.status", is("PENDENTE")))
             .andExpect(jsonPath("$.totalAmount", is(20.00)))
-            .andExpect(jsonPath("$.items[0].quantity", is(2)));
+            .andExpect(jsonPath("$.createdAt", not(emptyString())))
+            .andExpect(jsonPath("$.updatedAt", not(emptyString())))
+            .andExpect(jsonPath("$.items[0].id", notNullValue()))
+            .andExpect(jsonPath("$.items[0].quantity", is(2)))
+            .andExpect(jsonPath("$.items[0].productName", is("Teclado Mecânico")))
+            .andExpect(jsonPath("$.items[0].unitPrice", is(10.00)));
 
         // estoque deve ter sido descontado: 5 - 2 = 3
         mockMvc.perform(get("/api/products/" + productId))

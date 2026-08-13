@@ -2,6 +2,7 @@ package com.pucpr.tcc.monolith.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pucpr.tcc.monolith.products.dto.ProductRequest;
+import com.pucpr.tcc.monolith.users.dto.LoginRequest;
 import com.pucpr.tcc.monolith.users.dto.RegisterRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,6 +53,26 @@ class ProductIntegrationTest {
     }
 
     @Test
+    @DisplayName("POST /api/products com ADMIN real deve criar produto e retornar todos os campos")
+    void createProductAsRealAdminShouldSucceedAndReturnAllFields() throws Exception {
+        String realAdminToken = loginAsSeededAdmin();
+        var request = new ProductRequest("Cadeira Gamer", "Ergonômica", new BigDecimal("899.90"), 7);
+
+        mockMvc.perform(post("/api/products")
+                .header("Authorization", "Bearer " + realAdminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id", notNullValue()))
+            .andExpect(jsonPath("$.name", is("Cadeira Gamer")))
+            .andExpect(jsonPath("$.description", is("Ergonômica")))
+            .andExpect(jsonPath("$.price", is(899.90)))
+            .andExpect(jsonPath("$.stockQuantity", is(7)))
+            .andExpect(jsonPath("$.createdAt", not(emptyString())))
+            .andExpect(jsonPath("$.updatedAt", not(emptyString())));
+    }
+
+    @Test
     @DisplayName("POST /api/products com CUSTOMER deve retornar 403")
     void createProductAsCustomerShouldBeForbidden() throws Exception {
         var request = new ProductRequest("Produto", "Desc", new BigDecimal("100.00"), 10);
@@ -85,6 +106,15 @@ class ProductIntegrationTest {
     }
 
     // ── Helper ────────────────────────────────────────────────
+
+    private String loginAsSeededAdmin() throws Exception {
+        var request = new LoginRequest("admin@tcc.com", "admin123");
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
+    }
 
     private String registerAndGetToken(String email, String password) throws Exception {
         var request = new RegisterRequest("Teste", email, password);

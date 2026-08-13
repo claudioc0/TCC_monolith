@@ -46,6 +46,8 @@ class AuthIntegrationTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.token", not(emptyString())))
             .andExpect(jsonPath("$.type", is("Bearer")))
+            .andExpect(jsonPath("$.userId", notNullValue()))
+            .andExpect(jsonPath("$.name", is("Maria Teste")))
             .andExpect(jsonPath("$.email", is("maria.integration@test.com")))
             .andExpect(jsonPath("$.role", is("CUSTOMER")));
     }

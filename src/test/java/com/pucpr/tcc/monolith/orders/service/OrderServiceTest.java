@@ -42,8 +42,22 @@ class OrderServiceTest {
         var response = orderService.create(1L, request);
 
         assertThat(response.status()).isEqualTo(OrderStatus.PENDENTE);
+        assertThat(response.userId()).isEqualTo(1L);
         assertThat(response.totalAmount()).isEqualByComparingTo("300.00");
         verify(productService).decreaseStock(1L, 2);
+    }
+
+    @Test
+    @DisplayName("findAll deve retornar todos os pedidos cadastrados")
+    void findAllShouldReturnAllOrders() {
+        Order first = new Order(1L);
+        Order second = new Order(2L);
+        when(orderRepository.findAll()).thenReturn(List.of(first, second));
+
+        var response = orderService.findAll();
+
+        assertThat(response).hasSize(2);
+        assertThat(response).extracting("userId").containsExactly(1L, 2L);
     }
 
     @Test

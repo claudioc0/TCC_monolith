@@ -45,8 +45,21 @@ class ProductServiceTest {
         var response = productService.create(request);
 
         assertThat(response.name()).isEqualTo("Notebook");
+        assertThat(response.description()).isEqualTo("Notebook gamer");
         assertThat(response.price()).isEqualByComparingTo("3500.00");
         verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("findAll deve retornar todos os produtos cadastrados")
+    void findAllShouldReturnAllProducts() {
+        Product other = new Product("Mouse", "Mouse sem fio", new BigDecimal("80.00"), 20);
+        when(productRepository.findAll()).thenReturn(java.util.List.of(product, other));
+
+        var response = productService.findAll();
+
+        assertThat(response).hasSize(2);
+        assertThat(response).extracting("name").containsExactly("Notebook", "Mouse");
     }
 
     @Test
@@ -67,6 +80,17 @@ class ProductServiceTest {
         productService.decreaseStock(1L, 3);
 
         assertThat(product.getStockQuantity()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("decreaseStock deve permitir quando a quantidade solicitada é exatamente igual ao estoque")
+    void decreaseStockShouldSucceedWhenQuantityEqualsStock() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(any())).thenReturn(product);
+
+        productService.decreaseStock(1L, 10); // estoque inicial é exatamente 10
+
+        assertThat(product.getStockQuantity()).isEqualTo(0);
     }
 
     @Test
