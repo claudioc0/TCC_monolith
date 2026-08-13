@@ -58,7 +58,7 @@ class ProductIntegrationTest {
         String realAdminToken = loginAsSeededAdmin();
         var request = new ProductRequest("Cadeira Gamer", "Ergonômica", new BigDecimal("899.90"), 7);
 
-        mockMvc.perform(post("/api/products")
+        MvcResult result = mockMvc.perform(post("/api/products")
                 .header("Authorization", "Bearer " + realAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -68,8 +68,12 @@ class ProductIntegrationTest {
             .andExpect(jsonPath("$.description", is("Ergonômica")))
             .andExpect(jsonPath("$.price", is(899.90)))
             .andExpect(jsonPath("$.stockQuantity", is(7)))
-            .andExpect(jsonPath("$.createdAt", not(emptyString())))
-            .andExpect(jsonPath("$.updatedAt", not(emptyString())));
+            .andReturn();
+
+        // Via JsonNode: not(emptyString()) nao rejeita um valor JSON null.
+        var json = objectMapper.readTree(result.getResponse().getContentAsString());
+        org.assertj.core.api.Assertions.assertThat(json.get("createdAt").isNull()).isFalse();
+        org.assertj.core.api.Assertions.assertThat(json.get("updatedAt").isNull()).isFalse();
     }
 
     @Test

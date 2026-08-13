@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Testes de integração para o módulo de Pedidos.
@@ -57,19 +58,25 @@ class OrderIntegrationTest {
             {"items":[{"productId": %d, "quantity": 2}]}
             """.formatted(productId);
 
-        mockMvc.perform(post("/api/orders")
+        MvcResult result = mockMvc.perform(post("/api/orders")
                 .header("Authorization", "Bearer " + customerToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.status", is("PENDENTE")))
             .andExpect(jsonPath("$.totalAmount", is(20.00)))
-            .andExpect(jsonPath("$.createdAt", not(emptyString())))
-            .andExpect(jsonPath("$.updatedAt", not(emptyString())))
-            .andExpect(jsonPath("$.items[0].id", notNullValue()))
             .andExpect(jsonPath("$.items[0].quantity", is(2)))
             .andExpect(jsonPath("$.items[0].productName", is("Teclado Mecânico")))
-            .andExpect(jsonPath("$.items[0].unitPrice", is(10.00)));
+            .andExpect(jsonPath("$.items[0].unitPrice", is(10.00)))
+            .andReturn();
+
+        // Asserções via JsonNode (não via jsonPath matcher): "não vazio"/"não nulo" em cima de
+        // um matcher de String não rejeita corretamente um valor JSON null, e um Long trocado
+        // por 0L continua "não nulo" — então aqui verificamos o valor real.
+        var json = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(json.get("createdAt").isNull()).isFalse();
+        assertThat(json.get("updatedAt").isNull()).isFalse();
+        assertThat(json.get("items").get(0).get("id").asLong()).isGreaterThan(0);
 
         // estoque deve ter sido descontado: 5 - 2 = 3
         mockMvc.perform(get("/api/products/" + productId))

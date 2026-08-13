@@ -40,16 +40,20 @@ class AuthIntegrationTest {
     void registerShouldReturnJwt() throws Exception {
         var request = new RegisterRequest("Maria Teste", "maria.integration@test.com", "senha123");
 
-        mockMvc.perform(post("/api/auth/register")
+        MvcResult result = mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.token", not(emptyString())))
             .andExpect(jsonPath("$.type", is("Bearer")))
-            .andExpect(jsonPath("$.userId", notNullValue()))
             .andExpect(jsonPath("$.name", is("Maria Teste")))
             .andExpect(jsonPath("$.email", is("maria.integration@test.com")))
-            .andExpect(jsonPath("$.role", is("CUSTOMER")));
+            .andExpect(jsonPath("$.role", is("CUSTOMER")))
+            .andReturn();
+
+        // Via JsonNode: notNullValue() não rejeitaria um Long trocado por 0L (0L não é null).
+        long userId = objectMapper.readTree(result.getResponse().getContentAsString()).get("userId").asLong();
+        org.assertj.core.api.Assertions.assertThat(userId).isGreaterThan(0);
     }
 
     @Test
