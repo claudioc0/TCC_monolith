@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">monolith-ecommerce</a> &gt; <a href="index.source.html" class="el_package">com.pucpr.tcc.monolith.reports.service</a> &gt; <span class="el_source">ReportService.java</span></div><h1>ReportService.java</h1><pre class="source lang-java linenums">package com.pucpr.tcc.monolith.reports.service;
+
+import com.pucpr.tcc.monolith.orders.dto.OrderResponse;
+import com.pucpr.tcc.monolith.orders.service.OrderService;
+import com.pucpr.tcc.monolith.reports.dto.SalesReportResponse;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+
+/**
+ * Serviço responsável pela geração de relatórios de vendas.
+ *
+ * Recebe uma data de início e fim (LocalDate) e retorna um
+ * sumário de pedidos no período com métricas de negócio.
+ *
+ * Agrega dados exclusivamente via {@link OrderService} — nunca acessa
+ * o repositório ou as entidades do domínio de pedidos diretamente.
+ */
+@Service
+@Transactional(readOnly = true)
+public class ReportService {
+
+    private final OrderService orderService;
+
+<span class="fc" id="L30">    public ReportService(OrderService orderService) {</span>
+<span class="fc" id="L31">        this.orderService = orderService;</span>
+<span class="fc" id="L32">    }</span>
+
+    /**
+     * Gera o relatório de vendas para o período [startDate, endDate].
+     *
+     * A conversão de LocalDate para LocalDateTime usa:
+     * - início do dia (00:00:00) para startDate
+     * - fim do dia (23:59:59.999999999) para endDate
+     * garantindo que todos os pedidos do dia final sejam incluídos.
+     *
+     * @param startDate data de início (inclusive).
+     * @param endDate   data de fim (inclusive).
+     * @return {@link SalesReportResponse} com sumário e lista de pedidos.
+     */
+    public SalesReportResponse generateReport(LocalDate startDate, LocalDate endDate) {
+<span class="fc" id="L47">        LocalDateTime start = startDate.atStartOfDay();</span>
+<span class="fc" id="L48">        LocalDateTime end   = endDate.atTime(LocalTime.MAX);</span>
+
+<span class="fc" id="L50">        List&lt;OrderResponse&gt; orders = orderService.findByPeriod(start, end);</span>
+
+<span class="fc" id="L52">        long totalOrders     = orders.size();</span>
+<span class="fc" id="L53">        long deliveredOrders = orderService.countDeliveredByPeriod(start, end);</span>
+<span class="fc" id="L54">        long canceledOrders  = orderService.countCanceledByPeriod(start, end);</span>
+<span class="fc" id="L55">        BigDecimal totalRevenue = orderService.sumRevenueByPeriod(start, end);</span>
+
+<span class="fc" id="L57">        return new SalesReportResponse(</span>
+<span class="fc" id="L58">            startDate,</span>
+<span class="fc" id="L59">            endDate,</span>
+<span class="fc" id="L60">            totalOrders,</span>
+<span class="fc" id="L61">            deliveredOrders,</span>
+<span class="fc" id="L62">            canceledOrders,</span>
+<span class="fc" id="L63">            totalRevenue,</span>
+<span class="fc" id="L64">            orders</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

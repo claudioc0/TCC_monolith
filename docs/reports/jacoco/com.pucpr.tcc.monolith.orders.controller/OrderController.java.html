@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">monolith-ecommerce</a> &gt; <a href="index.source.html" class="el_package">com.pucpr.tcc.monolith.orders.controller</a> &gt; <span class="el_source">OrderController.java</span></div><h1>OrderController.java</h1><pre class="source lang-java linenums">package com.pucpr.tcc.monolith.orders.controller;
+
+import com.pucpr.tcc.monolith.orders.dto.OrderRequest;
+import com.pucpr.tcc.monolith.orders.dto.OrderResponse;
+import com.pucpr.tcc.monolith.orders.dto.UpdateStatusRequest;
+import com.pucpr.tcc.monolith.orders.service.OrderService;
+import com.pucpr.tcc.monolith.users.entity.User;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * Controller de Pedidos.
+ *
+ * O usuário autenticado é extraído do SecurityContext via
+ * {@link AuthenticationPrincipal}, evitando que o cliente passe o
+ * userId no body (prevenindo fraudes de impersonação).
+ */
+@RestController
+@RequestMapping(&quot;/api/orders&quot;)
+public class OrderController {
+
+    private final OrderService orderService;
+
+<span class="fc" id="L30">    public OrderController(OrderService orderService) {</span>
+<span class="fc" id="L31">        this.orderService = orderService;</span>
+<span class="fc" id="L32">    }</span>
+
+    /**
+     * Cria um novo pedido para o usuário autenticado.
+     * O userId é extraído automaticamente do token JWT.
+     */
+    @PostMapping
+    public ResponseEntity&lt;OrderResponse&gt; create(
+            @AuthenticationPrincipal User currentUser,
+            @Valid @RequestBody OrderRequest request) {
+<span class="fc" id="L42">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="fc" id="L43">                .body(orderService.create(currentUser.getId(), request));</span>
+    }
+
+    /**
+     * Lista pedidos do usuário autenticado.
+     */
+    @GetMapping(&quot;/my-orders&quot;)
+    public ResponseEntity&lt;List&lt;OrderResponse&gt;&gt; myOrders(@AuthenticationPrincipal User currentUser) {
+<span class="fc" id="L51">        return ResponseEntity.ok(orderService.findByUser(currentUser.getId()));</span>
+    }
+
+    /**
+     * Busca um pedido específico por ID.
+     */
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;OrderResponse&gt; findById(@PathVariable Long id) {
+<span class="nc" id="L59">        return ResponseEntity.ok(orderService.findById(id));</span>
+    }
+
+    /**
+     * Lista todos os pedidos — somente ADMIN.
+     */
+    @GetMapping
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;List&lt;OrderResponse&gt;&gt; findAll() {
+<span class="fc" id="L68">        return ResponseEntity.ok(orderService.findAll());</span>
+    }
+
+    /**
+     * Atualiza o status de um pedido seguindo o fluxo:
+     * PENDENTE → CONFIRMADO → ENVIADO → ENTREGUE
+     * Somente ADMIN pode alterar status.
+     */
+    @PatchMapping(&quot;/{id}/status&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;OrderResponse&gt; updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateStatusRequest request) {
+<span class="fc" id="L81">        return ResponseEntity.ok(orderService.updateStatus(id, request));</span>
+    }
+
+    /**
+     * Cancela um pedido.
+     * ADMIN pode cancelar qualquer pedido.
+     * CUSTOMER pode cancelar apenas pedidos PENDENTE.
+     */
+    @PatchMapping(&quot;/{id}/cancel&quot;)
+    public ResponseEntity&lt;OrderResponse&gt; cancel(@PathVariable Long id) {
+<span class="fc" id="L91">        return ResponseEntity.ok(orderService.cancel(id));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

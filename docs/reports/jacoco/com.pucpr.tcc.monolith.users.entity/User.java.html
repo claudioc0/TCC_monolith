@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">monolith-ecommerce</a> &gt; <a href="index.source.html" class="el_package">com.pucpr.tcc.monolith.users.entity</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">package com.pucpr.tcc.monolith.users.entity;
+
+import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * Entidade de Usuário do sistema.
+ *
+ * Implementa {@link UserDetails} do Spring Security para que o Spring
+ * possa carregar os detalhes do usuário durante a autenticação JWT
+ * sem necessitar de classes adaptadoras extras.
+ */
+@Entity
+@Table(name = &quot;users&quot;)
+public class User implements UserDetails {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    /** Senha armazenada como hash BCrypt — nunca em texto plano. */
+    @Column(nullable = false)
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+<span class="fc" id="L39">    private UserRole role = UserRole.CUSTOMER;</span>
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+<span class="fc" id="L46">        this.createdAt = LocalDateTime.now();</span>
+<span class="fc" id="L47">    }</span>
+
+<span class="fc" id="L49">    protected User() {}</span>
+
+<span class="fc" id="L51">    public User(String name, String email, String password, UserRole role) {</span>
+<span class="fc" id="L52">        this.name = name;</span>
+<span class="fc" id="L53">        this.email = email;</span>
+<span class="fc" id="L54">        this.password = password;</span>
+<span class="fc" id="L55">        this.role = role;</span>
+<span class="fc" id="L56">    }</span>
+
+    // ── UserDetails ───────────────────────────────────────────
+
+    @Override
+    public Collection&lt;? extends GrantedAuthority&gt; getAuthorities() {
+<span class="fc" id="L62">        return List.of(new SimpleGrantedAuthority(&quot;ROLE_&quot; + role.name()));</span>
+    }
+
+    /** Spring Security usa este campo como &quot;username&quot;. */
+    @Override
+<span class="fc" id="L67">    public String getUsername() { return email; }</span>
+
+    @Override
+<span class="fc" id="L70">    public String getPassword() { return password; }</span>
+
+    @Override
+<span class="fc" id="L73">    public boolean isAccountNonExpired() { return true; }</span>
+
+    @Override
+<span class="fc" id="L76">    public boolean isAccountNonLocked() { return true; }</span>
+
+    @Override
+<span class="fc" id="L79">    public boolean isCredentialsNonExpired() { return true; }</span>
+
+    @Override
+<span class="fc" id="L82">    public boolean isEnabled() { return true; }</span>
+
+    // ── Getters ───────────────────────────────────────────────
+
+<span class="fc" id="L86">    public Long getId() { return id; }</span>
+<span class="fc" id="L87">    public String getName() { return name; }</span>
+<span class="fc" id="L88">    public String getEmail() { return email; }</span>
+<span class="fc" id="L89">    public UserRole getRole() { return role; }</span>
+<span class="nc" id="L90">    public LocalDateTime getCreatedAt() { return createdAt; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">monolith-ecommerce</a> &gt; <a href="index.source.html" class="el_package">com.pucpr.tcc.monolith.products.service</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package com.pucpr.tcc.monolith.products.service;
+
+import com.pucpr.tcc.monolith.products.dto.ProductRequest;
+import com.pucpr.tcc.monolith.products.dto.ProductResponse;
+import com.pucpr.tcc.monolith.products.entity.Product;
+import com.pucpr.tcc.monolith.products.exception.InsufficientStockException;
+import com.pucpr.tcc.monolith.products.exception.ProductNotFoundException;
+import com.pucpr.tcc.monolith.products.repository.ProductRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * Camada de negócio para Produtos.
+ *
+ * Responsabilidades:
+ * - Criar, atualizar e remover produtos.
+ * - Validar regras de estoque.
+ * - Mapear entidades ↔ DTOs (nunca expondo entidades para a camada de Controller).
+ */
+@Service
+@Transactional
+public class ProductService {
+
+    private final ProductRepository productRepository;
+
+<span class="fc" id="L28">    public ProductService(ProductRepository productRepository) {</span>
+<span class="fc" id="L29">        this.productRepository = productRepository;</span>
+<span class="fc" id="L30">    }</span>
+
+    // ── Criação ───────────────────────────────────────────────
+
+    /**
+     * Cadastra um novo produto.
+     * @param request DTO com os dados validados pelo Controller.
+     * @return DTO de resposta com o produto persistido.
+     */
+    public ProductResponse create(ProductRequest request) {
+<span class="fc" id="L40">        Product product = new Product(</span>
+<span class="fc" id="L41">            request.name(),</span>
+<span class="fc" id="L42">            request.description(),</span>
+<span class="fc" id="L43">            request.price(),</span>
+<span class="fc" id="L44">            request.stockQuantity()</span>
+        );
+<span class="fc" id="L46">        return ProductResponse.from(productRepository.save(product));</span>
+    }
+
+    // ── Consultas ─────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public ProductResponse findById(Long id) {
+<span class="fc" id="L53">        return ProductResponse.from(getProductOrThrow(id));</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;ProductResponse&gt; findAll() {
+<span class="fc" id="L58">        return productRepository.findAll()</span>
+<span class="fc" id="L59">                .stream()</span>
+<span class="fc" id="L60">                .map(ProductResponse::from)</span>
+<span class="fc" id="L61">                .toList();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;ProductResponse&gt; searchByName(String name) {
+<span class="nc" id="L66">        return productRepository.findByNameContainingIgnoreCase(name)</span>
+<span class="nc" id="L67">                .stream()</span>
+<span class="nc" id="L68">                .map(ProductResponse::from)</span>
+<span class="nc" id="L69">                .toList();</span>
+    }
+
+    // ── Atualização ───────────────────────────────────────────
+
+    /**
+     * Atualiza todos os campos de um produto existente.
+     */
+    public ProductResponse update(Long id, ProductRequest request) {
+<span class="nc" id="L78">        Product product = getProductOrThrow(id);</span>
+<span class="nc" id="L79">        product.setName(request.name());</span>
+<span class="nc" id="L80">        product.setDescription(request.description());</span>
+<span class="nc" id="L81">        product.setPrice(request.price());</span>
+<span class="nc" id="L82">        product.setStockQuantity(request.stockQuantity());</span>
+<span class="nc" id="L83">        return ProductResponse.from(productRepository.save(product));</span>
+    }
+
+    // ── Remoção ───────────────────────────────────────────────
+
+    public void delete(Long id) {
+<span class="nc" id="L89">        getProductOrThrow(id); // Garante que o produto existe antes de remover</span>
+<span class="nc" id="L90">        productRepository.deleteById(id);</span>
+<span class="nc" id="L91">    }</span>
+
+    // ── Operações de Estoque (chamadas pelo OrderService) ─────
+
+    /**
+     * Reduz o estoque de um produto.
+     * Chamado internamente pelo OrderService durante a criação de um pedido.
+     *
+     * @throws InsufficientStockException se a quantidade disponível for menor que a solicitada.
+     */
+    public void decreaseStock(Long productId, int quantity) {
+<span class="fc" id="L102">        Product product = getProductOrThrow(productId);</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (product.getStockQuantity() &lt; quantity) {</span>
+<span class="fc" id="L104">            throw new InsufficientStockException(productId, quantity, product.getStockQuantity());</span>
+        }
+<span class="fc" id="L106">        product.setStockQuantity(product.getStockQuantity() - quantity);</span>
+<span class="fc" id="L107">        productRepository.save(product);</span>
+<span class="fc" id="L108">    }</span>
+
+    /**
+     * Devolve estoque ao cancelar um pedido.
+     * Chamado internamente pelo OrderService durante o cancelamento.
+     */
+    public void increaseStock(Long productId, int quantity) {
+<span class="fc" id="L115">        Product product = getProductOrThrow(productId);</span>
+<span class="fc" id="L116">        product.setStockQuantity(product.getStockQuantity() + quantity);</span>
+<span class="fc" id="L117">        productRepository.save(product);</span>
+<span class="fc" id="L118">    }</span>
+
+    // ── Helpers ───────────────────────────────────────────────
+
+    /**
+     * Recupera a entidade Product ou lança {@link ProductNotFoundException}.
+     * Reutilizado internamente para centralizar a lógica de &quot;not found&quot;.
+     * Privado: outros domínios devem usar {@link #findById(Long)}, que retorna um DTO.
+     */
+    private Product getProductOrThrow(Long id) {
+<span class="fc" id="L128">        return productRepository.findById(id)</span>
+<span class="fc" id="L129">                .orElseThrow(() -&gt; new ProductNotFoundException(id));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

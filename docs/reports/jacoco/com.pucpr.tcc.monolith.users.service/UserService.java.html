@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">monolith-ecommerce</a> &gt; <a href="index.source.html" class="el_package">com.pucpr.tcc.monolith.users.service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package com.pucpr.tcc.monolith.users.service;
+
+import com.pucpr.tcc.monolith.security.JwtService;
+import com.pucpr.tcc.monolith.users.dto.AuthResponse;
+import com.pucpr.tcc.monolith.users.dto.LoginRequest;
+import com.pucpr.tcc.monolith.users.dto.RegisterRequest;
+import com.pucpr.tcc.monolith.users.dto.UserResponse;
+import com.pucpr.tcc.monolith.users.entity.User;
+import com.pucpr.tcc.monolith.users.entity.UserRole;
+import com.pucpr.tcc.monolith.users.repository.UserRepository;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * Camada de negócio para Usuários.
+ *
+ * Responsabilidades:
+ * - Cadastrar novos usuários (com hash de senha BCrypt).
+ * - Autenticar e emitir tokens JWT.
+ */
+@Service
+@Transactional
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+
+<span class="fc" id="L35">    public UserService(UserRepository userRepository,</span>
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService,
+                       AuthenticationManager authenticationManager) {
+<span class="fc" id="L39">        this.userRepository = userRepository;</span>
+<span class="fc" id="L40">        this.passwordEncoder = passwordEncoder;</span>
+<span class="fc" id="L41">        this.jwtService = jwtService;</span>
+<span class="fc" id="L42">        this.authenticationManager = authenticationManager;</span>
+<span class="fc" id="L43">    }</span>
+
+    /**
+     * Cadastra um novo usuário com role CUSTOMER.
+     *
+     * @throws IllegalArgumentException se o e-mail já estiver em uso.
+     */
+    public AuthResponse register(RegisterRequest request) {
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (userRepository.existsByEmail(request.email())) {</span>
+<span class="fc" id="L52">            throw new IllegalArgumentException(&quot;E-mail já cadastrado: &quot; + request.email());</span>
+        }
+
+<span class="fc" id="L55">        User user = new User(</span>
+<span class="fc" id="L56">            request.name(),</span>
+<span class="fc" id="L57">            request.email(),</span>
+<span class="fc" id="L58">            passwordEncoder.encode(request.password()), // senha nunca em texto plano</span>
+<span class="fc" id="L59">            UserRole.CUSTOMER</span>
+        );
+
+<span class="fc" id="L62">        User saved = userRepository.save(user);</span>
+<span class="fc" id="L63">        String token = jwtService.generateToken(saved);</span>
+
+<span class="fc" id="L65">        return AuthResponse.of(token, saved.getId(), saved.getName(),</span>
+<span class="fc" id="L66">                               saved.getEmail(), saved.getRole().name());</span>
+    }
+
+    /**
+     * Autentica o usuário e retorna um token JWT.
+     *
+     * O {@link AuthenticationManager} valida as credenciais via
+     * {@link org.springframework.security.authentication.dao.DaoAuthenticationProvider},
+     * que por sua vez usa o {@link UserDetailsService} configurado no SecurityConfig.
+     *
+     * @throws org.springframework.security.core.AuthenticationException se as credenciais forem inválidas.
+     */
+    public AuthResponse login(LoginRequest request) {
+        // Lança BadCredentialsException automaticamente se inválido
+<span class="fc" id="L80">        authenticationManager.authenticate(</span>
+<span class="fc" id="L81">            new UsernamePasswordAuthenticationToken(request.email(), request.password())</span>
+        );
+
+<span class="fc" id="L84">        User user = userRepository.findByEmail(request.email())</span>
+<span class="pc" id="L85">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Usuário não encontrado após autenticação.&quot;));</span>
+
+<span class="fc" id="L87">        String token = jwtService.generateToken(user);</span>
+
+<span class="fc" id="L89">        return AuthResponse.of(token, user.getId(), user.getName(),</span>
+<span class="fc" id="L90">                               user.getEmail(), user.getRole().name());</span>
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse findById(Long id) {
+<span class="pc" id="L95">        return userRepository.findById(id)</span>
+<span class="fc" id="L96">                .map(UserResponse::from)</span>
+<span class="pc" id="L97">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Usuário não encontrado com id: &quot; + id));</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;UserResponse&gt; findAll() {
+<span class="nc" id="L102">        return userRepository.findAll()</span>
+<span class="nc" id="L103">                .stream()</span>
+<span class="nc" id="L104">                .map(UserResponse::from)</span>
+<span class="nc" id="L105">                .toList();</span>
+    }
+
+    public void delete(Long id) {
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (!userRepository.existsById(id)) {</span>
+<span class="nc" id="L110">            throw new IllegalArgumentException(&quot;Usuário não encontrado com id: &quot; + id);</span>
+        }
+<span class="nc" id="L112">        userRepository.deleteById(id);</span>
+<span class="nc" id="L113">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

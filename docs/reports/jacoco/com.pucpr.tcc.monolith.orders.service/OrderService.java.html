@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">monolith-ecommerce</a> &gt; <a href="index.source.html" class="el_package">com.pucpr.tcc.monolith.orders.service</a> &gt; <span class="el_source">OrderService.java</span></div><h1>OrderService.java</h1><pre class="source lang-java linenums">package com.pucpr.tcc.monolith.orders.service;
+
+import com.pucpr.tcc.monolith.orders.dto.OrderRequest;
+import com.pucpr.tcc.monolith.orders.dto.OrderResponse;
+import com.pucpr.tcc.monolith.orders.dto.UpdateStatusRequest;
+import com.pucpr.tcc.monolith.orders.entity.Order;
+import com.pucpr.tcc.monolith.orders.entity.OrderItem;
+import com.pucpr.tcc.monolith.orders.entity.OrderStatus;
+import com.pucpr.tcc.monolith.orders.exception.OrderNotFoundException;
+import com.pucpr.tcc.monolith.orders.repository.OrderRepository;
+import com.pucpr.tcc.monolith.products.dto.ProductResponse;
+import com.pucpr.tcc.monolith.products.service.ProductService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * Camada de negócio para Pedidos.
+ *
+ * Responsabilidades:
+ * - Orquestrar a criação de pedidos (validação de estoque + desconto do mesmo).
+ * - Listar pedidos por usuário ou por status.
+ * - Gerenciar cancelamento (com devolução de estoque).
+ * - Delegar transições de status para a entidade Order.
+ */
+@Service
+@Transactional
+public class OrderService {
+
+    private final OrderRepository orderRepository;
+    private final ProductService productService;
+
+<span class="fc" id="L36">    public OrderService(OrderRepository orderRepository, ProductService productService) {</span>
+<span class="fc" id="L37">        this.orderRepository = orderRepository;</span>
+<span class="fc" id="L38">        this.productService = productService;</span>
+<span class="fc" id="L39">    }</span>
+
+    // ── Criação ───────────────────────────────────────────────
+
+    /**
+     * Cria um pedido:
+     * 1. Valida e desconta o estoque de cada produto.
+     * 2. Cria os OrderItems com snapshot de preço.
+     * 3. Persiste o pedido com status PENDENTE.
+     *
+     * @param userId ID do usuário autenticado (extraído do JWT no Controller).
+     * @param request DTO com os itens solicitados.
+     * @return DTO com o pedido criado.
+     */
+    public OrderResponse create(Long userId, OrderRequest request) {
+<span class="fc" id="L54">        Order order = new Order(userId);</span>
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        for (OrderRequest.OrderItemRequest itemReq : request.items()) {</span>
+            // Busca o produto (lança ProductNotFoundException se não existir)
+<span class="fc" id="L58">            ProductResponse product = productService.findById(itemReq.productId());</span>
+
+            // Desconta o estoque (lança InsufficientStockException se insuficiente)
+<span class="fc" id="L61">            productService.decreaseStock(itemReq.productId(), itemReq.quantity());</span>
+
+            // Cria o item com snapshot do preço atual
+<span class="fc" id="L64">            OrderItem item = new OrderItem(</span>
+<span class="fc" id="L65">                order,</span>
+<span class="fc" id="L66">                product.id(),</span>
+<span class="fc" id="L67">                product.name(),</span>
+<span class="fc" id="L68">                product.price(),</span>
+<span class="fc" id="L69">                itemReq.quantity()</span>
+            );
+<span class="fc" id="L71">            order.addItem(item);</span>
+        }
+
+<span class="fc" id="L74">        return OrderResponse.from(orderRepository.save(order));</span>
+    }
+
+    // ── Consultas ─────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public OrderResponse findById(Long id) {
+<span class="nc" id="L81">        return OrderResponse.from(getOrderOrThrow(id));</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;OrderResponse&gt; findByUser(Long userId) {
+<span class="fc" id="L86">        return orderRepository.findByUserId(userId)</span>
+<span class="fc" id="L87">                .stream()</span>
+<span class="fc" id="L88">                .map(OrderResponse::from)</span>
+<span class="fc" id="L89">                .toList();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;OrderResponse&gt; findAll() {
+<span class="fc" id="L94">        return orderRepository.findAll()</span>
+<span class="fc" id="L95">                .stream()</span>
+<span class="fc" id="L96">                .map(OrderResponse::from)</span>
+<span class="fc" id="L97">                .toList();</span>
+    }
+
+    // ── Consultas para Relatórios (usadas pelo ReportService) ──
+
+    /**
+     * Lista pedidos criados dentro de um período.
+     * Único ponto de acesso de outros domínios (ex.: reports) ao histórico de pedidos.
+     */
+    @Transactional(readOnly = true)
+    public List&lt;OrderResponse&gt; findByPeriod(LocalDateTime start, LocalDateTime end) {
+<span class="fc" id="L108">        return orderRepository.findByCreatedAtBetween(start, end)</span>
+<span class="fc" id="L109">                .stream()</span>
+<span class="fc" id="L110">                .map(OrderResponse::from)</span>
+<span class="fc" id="L111">                .toList();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public long countDeliveredByPeriod(LocalDateTime start, LocalDateTime end) {
+<span class="fc" id="L116">        return orderRepository.countByStatusAndPeriod(OrderStatus.ENTREGUE, start, end);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public long countCanceledByPeriod(LocalDateTime start, LocalDateTime end) {
+<span class="fc" id="L121">        return orderRepository.countByStatusAndPeriod(OrderStatus.CANCELADO, start, end);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal sumRevenueByPeriod(LocalDateTime start, LocalDateTime end) {
+<span class="fc" id="L126">        return orderRepository.sumRevenueByPeriod(start, end);</span>
+    }
+
+    // ── Atualização de Status ─────────────────────────────────
+
+    /**
+     * Atualiza o status de um pedido seguindo o fluxo:
+     * PENDENTE → CONFIRMADO → ENVIADO → ENTREGUE
+     *
+     * A validação da transição é delegada ao método {@link Order#transitionTo(OrderStatus)},
+     * que encapsula a regra de negócio no domínio.
+     *
+     * @throws com.pucpr.tcc.monolith.orders.exception.InvalidStatusTransitionException se a transição for ilegal.
+     */
+    public OrderResponse updateStatus(Long orderId, UpdateStatusRequest request) {
+<span class="fc" id="L141">        Order order = getOrderOrThrow(orderId);</span>
+<span class="fc" id="L142">        order.transitionTo(request.newStatus());</span>
+<span class="fc" id="L143">        return OrderResponse.from(orderRepository.save(order));</span>
+    }
+
+    // ── Cancelamento ──────────────────────────────────────────
+
+    /**
+     * Cancela um pedido e devolve o estoque de cada item ao produto.
+     * Só é permitido cancelar pedidos PENDENTE ou CONFIRMADO (regra no enum).
+     */
+    public OrderResponse cancel(Long orderId) {
+<span class="fc" id="L153">        Order order = getOrderOrThrow(orderId);</span>
+
+        // Utiliza o mesmo mecanismo de transição — garante consistência
+<span class="fc" id="L156">        order.transitionTo(OrderStatus.CANCELADO);</span>
+
+        // Devolve o estoque de cada item
+<span class="fc bfc" id="L159" title="All 2 branches covered.">        for (OrderItem item : order.getItems()) {</span>
+<span class="fc" id="L160">            productService.increaseStock(item.getProductId(), item.getQuantity());</span>
+        }
+
+<span class="fc" id="L163">        return OrderResponse.from(orderRepository.save(order));</span>
+    }
+
+    // ── Helper ────────────────────────────────────────────────
+
+    private Order getOrderOrThrow(Long id) {
+<span class="fc" id="L169">        return orderRepository.findById(id)</span>
+<span class="fc" id="L170">                .orElseThrow(() -&gt; new OrderNotFoundException(id));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
