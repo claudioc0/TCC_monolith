@@ -7,11 +7,20 @@ a cada `mvn clean`) — esta cópia é o snapshot referente ao commit `67d5a7b`.
 
 ## Conteúdo
 
-- **`jacoco/index.html`** — relatório de Branch Coverage. 90,1% geral
-  (1.785/1.982 ramos), com detalhamento por pacote/classe/linha.
-- **`pitest/index.html`** — relatório de Mutation Score. 81,9% geral
-  (140/171 mutantes mortos), com o detalhe de cada mutante gerado, status
-  (`KILLED`/`SURVIVED`/`NO_COVERAGE`) e qual teste o matou.
+- **[`cobertura-codigo.md`](./cobertura-codigo.md)** — relatório de Branch
+  Coverage em Markdown: resultado geral, tabela por pacote, leitura dos dados.
+- **[`mutation-score.md`](./mutation-score.md)** — relatório de Mutation
+  Score em Markdown: KILLED/SURVIVED/NO_COVERAGE, os 3 mutantes sobreviventes
+  documentados individualmente, histórico das rodadas de refinamento.
+- **[`violacoes-arquiteturais.md`](./violacoes-arquiteturais.md)** —
+  relatório de violações arquiteturais (ArchUnit) em Markdown: as 7 regras,
+  as 11 violações encontradas e corrigidas, estado atual.
+- **[`execution-log.md`](./execution-log.md)** — log acumulado de execuções
+  das três métricas, para evidenciar determinismo/ausência de flakiness.
+- **`jacoco/index.html`** — relatório bruto de Branch Coverage (HTML,
+  navegável por pacote/classe/linha).
+- **`pitest/index.html`** — relatório bruto de Mutation Score (HTML, com o
+  detalhe de cada mutante gerado e qual teste o matou).
 
 ## Como reproduzir
 
