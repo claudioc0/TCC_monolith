@@ -38,7 +38,7 @@ monolith-ecommerce,com.pucpr.tcc.monolith.orders.entity,Order,0,102,0,2,0,30,0,1
 monolith-ecommerce,com.pucpr.tcc.monolith.orders.entity,OrderStatus.new OrderStatus() {...},0,12,0,2,0,2,0,3,0,2
 monolith-ecommerce,com.pucpr.tcc.monolith.orders.entity,OrderStatus.new OrderStatus() {...},0,7,0,0,0,2,0,2,0,2
 monolith-ecommerce,com.pucpr.tcc.monolith.orders.entity,OrderStatus.new OrderStatus() {...},0,15,0,4,0,2,0,4,0,2
-monolith-ecommerce,com.pucpr.tcc.monolith.orders.entity,OrderStatus.new OrderStatus() {...},2,13,1,3,0,2,1,3,0,2
+monolith-ecommerce,com.pucpr.tcc.monolith.orders.entity,OrderStatus.new OrderStatus() {...},0,15,0,4,0,2,0,4,0,2
 monolith-ecommerce,com.pucpr.tcc.monolith.orders.entity,OrderStatus.new OrderStatus() {...},0,7,0,0,0,2,0,2,0,2
 monolith-ecommerce,com.pucpr.tcc.monolith.orders.entity,OrderStatus,0,54,0,0,0,6,0,1,0,1
 monolith-ecommerce,com.pucpr.tcc.monolith.products.controller,ProductController,20,25,0,0,4,6,3,4,3,4

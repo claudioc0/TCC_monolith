@@ -38,7 +38,7 @@ inicial descrita abaixo.
 | 6 | `users_should_not_access_other_domains_internals` | Mesma restrição, a partir de `users`. |
 | 7 | `reports_should_not_access_other_domains_internals` | Mesma restrição, a partir de `reports` — inclui `orders`, já que `reports` agrega dados de pedidos e deveria fazer isso via `OrderService`, não acessando `OrderRepository`/`OrderStatus` diretamente. |
 
-**Por que a camada de controller fica fora das regras 4–7:** `@AuthenticationPrincipal User currentUser` é uma integração de framework (Spring Security), não acoplamento de negócio entre domínios — incluir isso na regra geraria ruído sem sinal real de violação.
+**Por que a camada de controller fica fora das regras 4–7:** `@AuthenticationPrincipal User currentUser` é uma integração de framework (Spring Security), não acoplamento de negócio entre domínios — incluir isso na regra geraria ruído sem sinal real de violação. Essa é uma decisão de escopo, documentada aqui para quem lê "0 violações" saber dela: a versão em microsserviços usa uma regra mais forte ("nenhuma classe `@RestController` depende de classe `@Entity`", por dependência, não só tipo de retorno) — aplicada do jeito que está no monólito, essa regra mais forte acusaria violação exatamente em `UserController` e `OrderController`, por causa desse mesmo parâmetro. É uma diferença conhecida entre as duas suítes, não algo escondido.
 
 ## Violações encontradas na primeira execução (já corrigidas)
 
@@ -68,6 +68,23 @@ acoplamento indevido deixa de ser uma violação de estilo e se torna,
 literalmente, impossível de compilar. A densidade de violações no monólito é
 a medida direta do que a fronteira física do microsserviço substitui.
 
+## Comparação com a versão em microsserviços
+
+| Item | Monólito | Microsserviços |
+|---|---|---|
+| Versão do ArchUnit | 1.2.1 | 1.2.1 |
+| Classes de regras | 2 | não detalhado |
+| Regras executadas | 7 | 17 (6 regras distintas, replicadas por serviço) |
+| Violações no estado final | 0 | 0 |
+
+A diferença de 7 para 17 não significa que o lado dos microsserviços seja mais
+rigoroso — são 6 regras distintas repetidas em cada serviço (cada um é um
+projeto Maven separado, com sua própria suíte). Em critério de regra
+efetivamente distinta, o monólito verifica 7 e os microsserviços 6; as 3 que
+só existem do lado de lá (convenção de nomes, acesso a repositório restrito a
+services, e a versão forte da regra de entidades-em-controller citada acima)
+estão registradas como diferença conhecida, não como algo a esconder.
+
 ## Metodologia
 
 As regras de arquitetura rodam como parte normal de `mvn test` (JUnit 5 via
@@ -80,3 +97,8 @@ mvn test
 ```
 
 Código-fonte das regras: [`src/test/java/.../architecture/`](../../src/test/java/com/pucpr/tcc/monolith/architecture/).
+
+Verificado de forma independente por um segundo integrante do grupo (3
+rodadas, resultado idêntico), com análise adicional da decisão de escopo
+citada acima. Relatório completo em Word:
+[`Relatorio-Violacoes-Arquiteturais-ArchUnit.docx`](./Relatorio-Violacoes-Arquiteturais-ArchUnit.docx).

@@ -83,6 +83,28 @@ class OrderStatusTransitionTest {
     }
 
     @Test
+    @DisplayName("CONFIRMADO → PENDENTE deve ser bloqueado (retrocesso)")
+    void confirmado_to_pendente_blocked() {
+        Order order = newOrder();
+        order.transitionTo(OrderStatus.CONFIRMADO);
+        assertThatThrownBy(() -> order.transitionTo(OrderStatus.PENDENTE))
+                .isInstanceOf(InvalidStatusTransitionException.class)
+                .hasMessageContaining("CONFIRMADO")
+                .hasMessageContaining("PENDENTE");
+    }
+
+    @Test
+    @DisplayName("CONFIRMADO → ENTREGUE deve ser bloqueado (pula etapa ENVIADO)")
+    void confirmado_to_entregue_blocked() {
+        Order order = newOrder();
+        order.transitionTo(OrderStatus.CONFIRMADO);
+        assertThatThrownBy(() -> order.transitionTo(OrderStatus.ENTREGUE))
+                .isInstanceOf(InvalidStatusTransitionException.class)
+                .hasMessageContaining("CONFIRMADO")
+                .hasMessageContaining("ENTREGUE");
+    }
+
+    @Test
     @DisplayName("ENVIADO → CANCELADO deve ser bloqueado")
     void enviado_to_cancelado_blocked() {
         Order order = newOrder();
