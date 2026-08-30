@@ -28,6 +28,11 @@ a cada `mvn clean`) — esta pasta é uma cópia manual do estado mais recente.
   versão em microsserviços.
 - **[`execution-log.md`](./execution-log.md)** — log acumulado de execuções
   das três métricas, para evidenciar determinismo/ausência de flakiness.
+- **[`replicacao-e-determinismo.md`](./replicacao-e-determinismo.md)** —
+  quantas rodadas de medição são recomendadas (e por quê), e o critério usado
+  para classificar cada divergência encontrada entre a medição própria e a
+  verificação independente do Eric (erro / achado de ambiente / estados
+  diferentes no tempo).
 - **`Relatorio-*.docx`** — versões completas em Word das três medições acima,
   produzidas de forma independente por outro integrante do grupo (mesma
   metodologia, ambiente JDK 21 em vez de JDK 17); os `.md` desta pasta
