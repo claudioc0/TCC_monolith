@@ -45,7 +45,8 @@ consecutivas (idênticas byte a byte) além da comparação percentual — ver
 | 1 | 2026-08-13 | `67d5a7b` | 140/171 | 81,9% | baseline pós-refinamento |
 | 2 | 2026-08-21 | `3c46469` | 140/171 | 81,9% | repetição, mesmo resultado |
 | 3 | 2026-08-21 | `3c46469` | 140/171 | 81,9% | repetição, mesmo resultado |
-| 4 | 2026-08-28 | (após fechar o gap `OrderStatus`) | **141/171** | **82,5%** | **valor de referência atual** — o mutante `OrderStatus$2.canTransitionTo` (encontrado por verificação independente) foi morto |
+| 4 | 2026-08-28 | (após fechar o gap `OrderStatus`) | 141/171 | 82,5% | mutante `OrderStatus$2.canTransitionTo` (encontrado por verificação independente) foi morto |
+| 5 | 2026-09-04 | (PITest 1.15.8 → 1.15.3, alinhado com microsserviços) | **141/171** | **82,5%** | **valor de referência atual** — resultado idêntico à rodada 4, mutante a mutante; confirma que a versão do PITest não era a causa da divergência de ambiente (era o JDK) |
 
 Uma verificação independente em ambiente JDK 21 obteve 167 mutantes totais
 (não 171) — diferença de ambiente de compilação, documentada em

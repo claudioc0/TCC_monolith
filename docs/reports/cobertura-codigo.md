@@ -7,7 +7,7 @@
 fluxo (`if`/`else`/`switch`/operadores curto-circuitados) exercitados pela suíte
 de testes.
 
-## ⚠️ Correção de metodologia (registrada, não escondida)
+## ⚠️ Correção de metodologia (registrada)
 
 Uma medição anterior deste relatório reportou "branch coverage 90,1%
 (1.785/1.982)". Esse número está **errado**: foram lidas as colunas

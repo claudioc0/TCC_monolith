@@ -1,6 +1,6 @@
 # Relatório de Mutation Score
 
-**Ferramenta:** PITest 1.15.8 (+ `pitest-junit5-plugin`)
+**Ferramenta:** PITest 1.15.3 (+ `pitest-junit5-plugin`) — alinhado com a versão usada na medição em microsserviços
 **Sistema:** monolith-ecommerce
 **Ambiente:** JDK 17.0.18 (versão declarada no projeto — `<java.version>17</java.version>`)
 **Critério medido:** fração de mutantes (alterações sintáticas mínimas e
@@ -100,18 +100,20 @@ número. **171 é o valor de referência**, porque `<java.version>` do projeto
 declara 17, e é o ambiente usado nesta página. O relatório em Word do outro
 integrante documenta essa diferença em detalhe e recomenda o mesmo critério.
 
-## Duas diferenças declaradas frente aos microsserviços
+## Uma diferença já resolvida, uma ainda em aberto
 
-1. **Versão do PITest**: monólito usa 1.15.8, a versão em microsserviços usa
-   1.15.3 — versões diferentes podem gerar conjuntos de mutantes diferentes
-   para o mesmo bytecode, mudando o denominador dos dois lados.
-2. **Classes excluídas do escopo**: o monólito exclui `MonolithApplication`,
-   `DatabaseSeeder` e o pacote `architecture`; a versão em microsserviços não
-   tem exclusão equivalente documentada. Excluir código de bootstrap/seed
-   tende a favorecer o lado que exclui, porque é justamente o tipo de código
-   que concentra mutante difícil de matar.
-
-Ambas ficam registradas como ameaça à validade da comparação, não escondidas.
+1. ~~**Versão do PITest**: monólito usa 1.15.8, microsserviços usa 1.15.3.~~
+   **Resolvido** — o monólito passou a usar 1.15.3 também. Resultado após o
+   downgrade: **idêntico**, mutante a mutante (141/171 mortos, mesmos 3
+   sobreviventes) — a mudança de versão não alterou nada neste projeto. A
+   diferença de versão em si nunca foi a causa da divergência de ambiente
+   registrada na seção anterior; era o JDK (17 vs. 21), não o PITest.
+2. **Classes excluídas do escopo** — ainda em aberto: o monólito exclui
+   `MonolithApplication`, `DatabaseSeeder` e o pacote `architecture`; a
+   versão em microsserviços não tem exclusão equivalente documentada.
+   Excluir código de bootstrap/seed tende a favorecer o lado que exclui,
+   porque é justamente o tipo de código que concentra mutante difícil de
+   matar. Ameaça à validade ainda não resolvida.
 
 ## Determinismo da medição
 

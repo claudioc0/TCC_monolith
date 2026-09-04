@@ -37,10 +37,14 @@ para aumentar assertividade aqui. As que são, em ordem de valor:
    repetição local teria revelado.
 3. **Alinhar o protocolo de medição entre monólito e microsserviços** — pesa
    mais na validade da comparação final do que qualquer repetição adicional
-   de qualquer um dos lados. Duas divergências de protocolo já estão
-   registradas como ameaça à validade em `mutation-score.md`: versão do
-   PITest (1.15.8 vs. 1.15.3) e critério de exclusão de classes de
-   bootstrap/seed do escopo de mutação.
+   de qualquer um dos lados. Duas divergências de protocolo tinham sido
+   registradas como ameaça à validade: versão do PITest e critério de
+   exclusão de classes de bootstrap/seed do escopo de mutação. A primeira já
+   foi resolvida — o monólito passou a usar PITest 1.15.3, igual à versão em
+   microsserviços, e o resultado saiu **idêntico** ao da versão anterior
+   (141/171, mesmos 3 sobreviventes): a divergência de ambiente registrada
+   antes nunca foi causada pela versão do PITest, e sim pelo JDK (17 vs. 21).
+   A segunda (critério de exclusão) segue em aberto — ver `mutation-score.md`.
 
 **Recomendação prática adotada:** manter as 3 rodadas locais como evidência de
 determinismo, contar a replicação do Eric como a segunda camada de rigor, e
