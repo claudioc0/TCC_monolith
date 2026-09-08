@@ -46,16 +46,18 @@ consecutivas (idênticas byte a byte) além da comparação percentual — ver
 | 2 | 2026-08-21 | `3c46469` | 140/171 | 81,9% | repetição, mesmo resultado |
 | 3 | 2026-08-21 | `3c46469` | 140/171 | 81,9% | repetição, mesmo resultado |
 | 4 | 2026-08-28 | (após fechar o gap `OrderStatus`) | 141/171 | 82,5% | mutante `OrderStatus$2.canTransitionTo` (encontrado por verificação independente) foi morto |
-| 5 | 2026-09-04 | (PITest 1.15.8 → 1.15.3, alinhado com microsserviços) | **141/171** | **82,5%** | **valor de referência atual** — resultado idêntico à rodada 4, mutante a mutante; confirma que a versão do PITest não era a causa da divergência de ambiente (era o JDK) |
+| 5 | 2026-09-04 | (PITest 1.15.8 → 1.15.3, alinhado com microsserviços) | 141/171 | 82,5% | resultado idêntico à rodada 4, mutante a mutante; confirma que a versão do PITest não era a causa da divergência de ambiente (era o JDK) |
+| 6 | 2026-09-04 | (exclusão de `MonolithApplication`/`DatabaseSeeder`/`architecture.*` removida do `pom.xml`) | **141/174** | **81,0%** | **valor de referência atual** — 3 mutantes novos, todos em `DatabaseSeeder`, todos `SURVIVED`; confirma que a exclusão inflava o score em 1,5 p.p.; repetido 2×, resultado idêntico mutante a mutante nas duas |
 
 Uma verificação independente em ambiente JDK 21 obteve 167 mutantes totais
-(não 171) — diferença de ambiente de compilação, documentada em
-`mutation-score.md`. **JDK 17 é o valor de referência**, por ser a versão
-declarada no `pom.xml`.
+sobre a configuração *anterior* (171, com exclusão) — diferença de ambiente
+de compilação, documentada em `mutation-score.md`. **JDK 17 é o valor de
+referência**, por ser a versão declarada no `pom.xml`. Essa comparação de
+ambiente ainda não foi refeita sobre os 174 mutantes da configuração atual.
 
 Determinismo: verificado mutante a mutante (não só o agregado) entre
-execuções — mesmo conjunto de 171 mutantes, mesmo status para cada um, em
-todas as rodadas.
+execuções — mesmo conjunto de mutantes, mesmo status para cada um, em todas
+as rodadas de uma mesma configuração.
 
 ## Violações Arquiteturais (ArchUnit)
 
@@ -78,9 +80,13 @@ atuais, ambos determinísticos e reproduzíveis:
 | Métrica | Valor |
 |---|---|
 | Testes | 98/98, 0 falhas |
-| Branch Coverage | 81,0% (34/42) |
-| Mutation Score | 82,5% (141/171) |
+| Branch Coverage | 81,0% (34/42) — 73,8% (31/42) só com testes de unidade |
+| Mutation Score | 81,0% (141/174) |
 | Violações Arquiteturais | 0/7 regras |
+
+Ver [`resultados-finais.md`](./resultados-finais.md) para a linhagem
+completa de cada número (valor errado → correção → valor final) e o estado
+das ameaças à validade.
 
 ## Como reproduzir
 

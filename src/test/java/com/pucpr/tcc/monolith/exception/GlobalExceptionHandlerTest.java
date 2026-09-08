@@ -10,15 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.validation.BindingResult;
+import org.springframework.core.MethodParameter;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
-import java.util.List;
+import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
 
@@ -83,13 +82,13 @@ class GlobalExceptionHandlerTest {
 
     @Test
     @DisplayName("handleValidationErrors deve retornar 400 com o mapa de campos invalidos")
-    void handleValidationErrorsShouldReturn400WithFieldMap() {
-        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        BindingResult bindingResult = mock(BindingResult.class);
-        when(ex.getBindingResult()).thenReturn(bindingResult);
-        when(bindingResult.getFieldErrors()).thenReturn(List.of(
-                new FieldError("productRequest", "price", "O preço deve ser maior que zero.")
-        ));
+    void handleValidationErrorsShouldReturn400WithFieldMap() throws Exception {
+        // Excecao real (sem mock): o Mockito nao consegue instrumentar
+        // MethodArgumentNotValidException em algumas JDKs.
+        var bindingResult = new BeanPropertyBindingResult(new Object(), "productRequest");
+        bindingResult.addError(new FieldError("productRequest", "price", "O preço deve ser maior que zero."));
+        Method method = GlobalExceptionHandlerTest.class.getDeclaredMethod("metodoAlvoDaValidacao", String.class);
+        var ex = new MethodArgumentNotValidException(new MethodParameter(method, 0), bindingResult);
 
         var response = handler.handleValidationErrors(ex);
 
@@ -117,5 +116,11 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().message())
                 .isEqualTo("Erro interno do servidor. Tente novamente mais tarde.")
                 .doesNotContain("stacktrace sensivel");
+    }
+
+    /** Alvo ficticio usado apenas para construir o MethodParameter da excecao acima. */
+    @SuppressWarnings("unused")
+    private void metodoAlvoDaValidacao(String price) {
+        // sem corpo: serve so como assinatura para a reflexao
     }
 }

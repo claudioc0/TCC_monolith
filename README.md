@@ -25,16 +25,27 @@ microsserviços: [`TCC_microservice`](https://github.com/claudioc0/TCC_microserv
 
 ## Como executar
 
+**Pré-requisito único: JDK 17.** Não é preciso instalar o Maven — o projeto
+inclui o Maven Wrapper (`mvnw` / `mvnw.cmd`), que baixa a versão correta do
+Maven na primeira execução.
+
 ```bash
 # Clone ou extraia o projeto
 cd ecommerce-tcc
 
-# Executa na porta 8080
-mvn spring-boot:run
+# Executa na porta 8080 (Windows: mvnw.cmd spring-boot:run)
+./mvnw spring-boot:run
 
-# Executa os testes
-mvn test
+# Executa os testes + cobertura JaCoCo (target/site/jacoco/index.html)
+./mvnw test
+
+# Mutation score com PITest (target/pit-reports/index.html)
+./mvnw test-compile org.pitest:pitest-maven:mutationCoverage
 ```
+
+> Quem já tem o Maven instalado pode usar `mvn` no lugar de `./mvnw`.
+> O erro `'mvn' não é reconhecido...` significa apenas que o Maven não está no
+> PATH da máquina — nesse caso, use o wrapper.
 
 ### Acesso ao H2 Console
 ```

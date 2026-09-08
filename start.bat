@@ -12,4 +12,4 @@ start chrome --incognito "%~dp0index.html" || start msedge -inprivate "%~dp0inde
 
 echo [2/2] Iniciando o Backend (Spring Boot)...
 echo.
-mvn spring-boot:run
+call "%~dp0mvnw.cmd" spring-boot:run

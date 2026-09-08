@@ -109,6 +109,21 @@ a versão em microsserviços, segundo o relatório dela, não tem nenhum — par
 da cobertura daqui vem desses testes, e essa assimetria é uma diferença real
 entre as duas suítes, não só entre as arquiteturas.
 
+**Tamanho medido da assimetria:** rodando só a suíte de unidade (69 testes,
+excluindo os 4 `@SpringBootTest` — `AuthIntegrationTest`,
+`OrderIntegrationTest`, `ProductIntegrationTest`, `ReportIntegrationTest`), o
+branch coverage cai de 81,0% (34/42) para **73,8% (31/42)** — os testes de
+integração são responsáveis por 3 dos 34 ramos cobertos, **7,1 pontos
+percentuais** do total. Não é uma diferença que dê para "zerar" removendo os
+testes de integração (isso pioraria a suíte, não equalizaria a comparação) —
+mas também não é uma diferença desprezível a ponto de ignorar ao comparar
+com um lado que não tem nenhum teste desse tipo. A forma honesta de reportar
+é as duas leituras lado a lado (81,0% suíte completa / 73,8% só unidade),
+deixando explícito qual delas está sendo comparada com o número do outro
+lado — comparar "81,0% com integração" contra um "100%" de microsserviços
+que não tem nenhum teste de integração equivalente pesaria a comparação a
+favor do lado que não tem a assimetria.
+
 ## Metodologia
 
 ```bash

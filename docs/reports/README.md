@@ -16,6 +16,10 @@ a cada `mvn clean`) — esta pasta é uma cópia manual do estado mais recente.
 
 ## Conteúdo
 
+- **[`resultados-finais.md`](./resultados-finais.md)** — ponto único de
+  consulta: os quatro números atuais lado a lado, linhagem de cada um
+  (valor errado → correção → valor final), ameaças à validade em aberto e
+  onde encontrar o detalhe de cada métrica. Comece por aqui.
 - **[`cobertura-codigo.md`](./cobertura-codigo.md)** — relatório de Branch
   Coverage em Markdown: resultado geral (corrigido), tabela por pacote,
   leitura dos dados, a correção de metodologia em detalhe.
@@ -37,6 +41,12 @@ a cada `mvn clean`) — esta pasta é uma cópia manual do estado mais recente.
   produzidas de forma independente por outro integrante do grupo (mesma
   metodologia, ambiente JDK 21 em vez de JDK 17); os `.md` desta pasta
   incorporam as correções e achados desses documentos.
+- **`TCC_Métricas.docx`** — rascunho histórico (commit `e72507d`, 63 testes,
+  2026-08-07), anterior a todas as correções registradas nesta pasta; números
+  do monólito nele estão **superados**, não usar como valor atual (ver nota
+  em `resultados-finais.md`). A "Parte II" tem conteúdo próprio ainda não
+  duplicado aqui (formalização GQM, métrica de CBO pendente de
+  instrumentação, dados de microsserviços de 2026-08-07).
 - **`jacoco/index.html`** — relatório bruto de Branch Coverage (HTML,
   navegável por pacote/classe/linha).
 - **`pitest/index.html`** — relatório bruto de Mutation Score (HTML, com o

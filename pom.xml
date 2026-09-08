@@ -143,11 +143,6 @@
                     <targetTests>
                         <param>com.pucpr.tcc.monolith.*</param>
                     </targetTests>
-                    <excludedClasses>
-                        <param>com.pucpr.tcc.monolith.MonolithApplication</param>
-                        <param>com.pucpr.tcc.monolith.security.DatabaseSeeder</param>
-                        <param>com.pucpr.tcc.monolith.architecture.*</param>
-                    </excludedClasses>
                     <excludedTestClasses>
                         <param>com.pucpr.tcc.monolith.architecture.*</param>
                     </excludedTestClasses>
