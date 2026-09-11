@@ -28,16 +28,16 @@ public class Order {
     @Column(nullable = false)
     private Long userId;
 
-    @OneToMany(mappedBy = &quot;order&quot;, cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-<span class="fc" id="L32">    private List&lt;OrderItem&gt; items = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L31">    @OneToMany(mappedBy = &quot;order&quot;, cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)</span>
+    private List&lt;OrderItem&gt; items = new ArrayList&lt;&gt;();
 
     /** Valor total calculado como soma dos subtotais dos itens. */
-    @Column(nullable = false, precision = 10, scale = 2)
-<span class="fc" id="L36">    private BigDecimal totalAmount = BigDecimal.ZERO;</span>
+<span class="fc" id="L35">    @Column(nullable = false, precision = 10, scale = 2)</span>
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
-    @Enumerated(EnumType.STRING)
+<span class="fc" id="L38">    @Enumerated(EnumType.STRING)</span>
     @Column(nullable = false)
-<span class="fc" id="L40">    private OrderStatus status = OrderStatus.PENDENTE;</span>
+    private OrderStatus status = OrderStatus.PENDENTE;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

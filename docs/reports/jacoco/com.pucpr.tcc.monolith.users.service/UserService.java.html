@@ -32,10 +32,10 @@ public class UserService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-<span class="fc" id="L35">    public UserService(UserRepository userRepository,</span>
+    public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService,
-                       AuthenticationManager authenticationManager) {
+<span class="fc" id="L38">                       AuthenticationManager authenticationManager) {</span>
 <span class="fc" id="L39">        this.userRepository = userRepository;</span>
 <span class="fc" id="L40">        this.passwordEncoder = passwordEncoder;</span>
 <span class="fc" id="L41">        this.jwtService = jwtService;</span>
@@ -56,7 +56,7 @@ public class UserService {
 <span class="fc" id="L56">            request.name(),</span>
 <span class="fc" id="L57">            request.email(),</span>
 <span class="fc" id="L58">            passwordEncoder.encode(request.password()), // senha nunca em texto plano</span>
-<span class="fc" id="L59">            UserRole.CUSTOMER</span>
+            UserRole.CUSTOMER
         );
 
 <span class="fc" id="L62">        User saved = userRepository.save(user);</span>

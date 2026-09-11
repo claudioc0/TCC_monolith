@@ -5,10 +5,10 @@ demais arquivos desta pasta têm a análise detalhada por métrica; este junta
 os quatro resultados no mesmo lugar e resolve, de forma explícita, qual valor
 é o de referência quando existiu mais de uma medição ao longo do tempo.
 
-**Commit de referência:** pós-push de 2026-09-04 (alinhamento de versão do
-PITest + remoção da exclusão de classes, ambos deste mesmo dia)
-**Ambiente de referência:** JDK 17.0.18 (`<java.version>17</java.version>`
-no `pom.xml`) — ver seção "Ambiente" abaixo para o porquê de fixar isso.
+**Commit de referência:** pós-migração para JDK 21 (2026-09-11, pedido do
+orientador, para padronizar com o ambiente já usado pelo Eric)
+**Ambiente de referência:** JDK 21.0.12.1 Temurin (`<java.version>21</java.version>`
+no `pom.xml`) — ver seção "Ambiente" abaixo.
 
 ## Tabela consolidada
 
@@ -16,7 +16,7 @@ no `pom.xml`) — ver seção "Ambiente" abaixo para o porquê de fixar isso.
 |---|---|---|---|
 | Testes (unidade + integração + arquitetura) | JUnit 5 + Mockito + ArchUnit | **98/98, 0 falhas, 0 erros** (69 são de unidade, 29 de integração) | suíte verde |
 | Branch Coverage | JaCoCo 0.8.11 | **34/42 = 81,0%** (73,8% só com os 69 testes de unidade — ver ameaça 4) | meta do protocolo: 100% (fonte: `TCC_Métricas.docx`, não confirmada em outro documento — ver observação abaixo) |
-| Mutation Score | PITest 1.15.3 | **141/174 = 81,0%** (Test Strength 141/147 = 95,9%) | sem meta fixa; comparativo entre arquiteturas |
+| Mutation Score | PITest 1.15.3 | **137/170 = 80,6%** (Test Strength 137/143 = 95,8%) | sem meta fixa; comparativo entre arquiteturas |
 | Violações Arquiteturais | ArchUnit 1.2.1 | **0/7 regras** | meta do protocolo: 0 |
 
 > A meta de "100% de branch coverage" citada na tabela veio de uma frase do
@@ -48,7 +48,7 @@ relatório específico e em `execution-log.md`.
 
 Detalhe completo: `cobertura-codigo.md`.
 
-### Mutation Score: 52,6% (rascunho inicial) → 81,9% → 82,5% → 81,0%
+### Mutation Score: 52,6% (rascunho inicial) → 81,9% → 82,5% → 81,0% → 80,6%
 
 1. Rascunho bem inicial (commit `e72507d`, 63 testes, 2026-08-07, documentado
    em `TCC_Métricas.docx`): **52,6% (90/171)** — primeira rodada completa,
@@ -64,9 +64,14 @@ Detalhe completo: `cobertura-codigo.md`.
    mudança no resultado).
 5. Depois de remover a exclusão de `MonolithApplication`/`DatabaseSeeder`/
    `architecture.*` do escopo de mutação (ver ameaça 2 abaixo): **81,0%
-   (141/174)** — valor de referência atual. A exclusão estava inflando o
-   score em 1,5 p.p.; os 3 mutantes que ela escondia (todos em
-   `DatabaseSeeder`) sobrevivem de verdade.
+   (141/174)**, em JDK 17. A exclusão estava inflando o score em 1,5 p.p.;
+   os 3 mutantes que ela escondia (todos em `DatabaseSeeder`) sobrevivem de
+   verdade.
+6. Depois da migração para JDK 21 (2026-09-11, pedido do orientador, ver
+   ameaça 5 abaixo): **80,6% (137/170)** — valor de referência atual. 4
+   mutantes a menos que em JDK 17 (bytecode diferente em `orders.entity` e
+   `security`), mesmos 6 sobreviventes de antes — nenhuma conclusão
+   qualitativa muda, só o denominador.
 
 Detalhe completo: `mutation-score.md`.
 
@@ -113,32 +118,41 @@ TCC.
 | 2 | Critério de exclusão de classes no PITest (`MonolithApplication`, `DatabaseSeeder`, `architecture.*` excluídos do monólito; sem exclusão documentada em microsserviços) | **Resolvida (2026-09-04)** — exclusão removida; confirmado que ela inflava o score em 1,5 p.p. (82,5% → 81,0%), só por causa de `DatabaseSeeder` |
 | 3 | Métrica de CBO/acoplamento estrutural (Question 4 do GQM, `TCC_Métricas.docx` Parte II) | **Em andamento** — ferramenta escolhida (`mauricioaniche/ck`), instrumentação ainda não feita |
 | 4 | Assimetria de esforço de teste entre monólito (4 testes de integração `@SpringBootTest`) e microsserviços (segundo o relatório deles, nenhum) | **Quantificada (2026-09-04), não eliminável unilateralmente** — os 4 testes de integração respondem por 7,1 p.p. de branch coverage (81,0% completa vs. 73,8% só unidade); documentado para reportar as duas leituras lado a lado em vez de esconder a assimetria |
+| 5 | Divergência de JDK entre monólito (declarava 17) e a verificação do Eric (usava 21) | **Resolvida (2026-09-11)** — projeto migrado para JDK 21 por pedido do orientador; mutation score recalculado (137/170 = 80,6%), branch coverage e violações inalterados. **Pendência fora deste repositório:** o `pom.xml` de microsserviços também precisa declarar 21 formalmente. |
 
 Detalhe da ameaça 2: `mutation-score.md`, seção "Uma ameaça resolvida, outra
 fechada nesta rodada". Detalhe da ameaça 4: `cobertura-codigo.md`, seção
-"Comparação com a versão em microsserviços".
+"Comparação com a versão em microsserviços". Detalhe da ameaça 5:
+`mutation-score.md`, seção "Ambiente: por que a padronização em JDK 21
+aconteceu".
 
 ## Ambiente
 
-JDK 17 é o valor de referência porque é o que o `pom.xml` declara
-(`<java.version>17</java.version>`). A verificação independente do Eric em
-JDK 21 obteve totais ligeiramente diferentes em dois pontos — não por erro,
-mas porque PITest muta bytecode compilado, e compiladores de JDKs diferentes
-geram bytecode ligeiramente distinto para a mesma classe fonte:
+Até 2026-09-11, o monólito declarava JDK 17 enquanto a verificação
+independente do Eric usava JDK 21 — uma divergência de ambiente documentada
+como ameaça à validade (ameaça 5 acima). Por pedido do orientador, o
+projeto passou a padronizar em **JDK 21** também, eliminando essa variável
+em vez de só documentá-la:
 
-| | JDK 17 (referência) | JDK 21 (verificação Eric) |
+| | JDK 17 (histórico) | JDK 21 (referência atual) |
 |---|---|---|
-| Mutantes totais gerados | 171 (configuração antiga, com exclusão) | 167 |
-| Branch coverage | 81,0% (34/42) | mesmo código-fonte, mesma suíte — sem divergência de ramos reportada |
+| Mutantes totais gerados (PITest) | 174 | 170 |
+| Mortos | 141 | 137 |
+| Mutation Score | 81,0% | **80,6%** |
+| Branch Coverage | 81,0% (34/42) | 81,0% (34/42) — idêntico |
+| Violações Arquiteturais | 0/7 | 0/7 — idêntico |
 
-A comparação de mutantes por JDK ainda não foi refeita sobre os 174
-mutantes da configuração atual (sem exclusão) — só foi medida, até agora,
-com a configuração antiga, em que os dois lados (JDK 17 e JDK 21) usavam a
-mesma exclusão de classes.
+Só o Mutation Score foi sensível à troca de JDK (PITest muta bytecode
+compilado, e compiladores de JDKs diferentes geram bytecode ligeiramente
+distinto para a mesma classe fonte — 4 mutantes a menos em `orders.entity`
+e `security`, mesmos 6 sobreviventes de antes). Branch coverage e
+violações arquiteturais não usam bytecode gerado por instrumentação
+sensível a essa diferença da mesma forma, e saíram idênticos.
 
-Ver `mutation-score.md`, seção "Ambiente: por que o JDK declarado importa",
-e `replicacao-e-determinismo.md`, seção 2.2, para a análise completa de por
-que essa diferença é esperada e não indica erro de nenhum dos dois lados.
+Ver `mutation-score.md`, seção "Ambiente: por que a padronização em JDK 21
+aconteceu", e `replicacao-e-determinismo.md`, seção 2.2, para a análise
+completa de por que a diferença antiga era esperada e como ela foi
+resolvida (não só documentada).
 
 ## Rastreabilidade
 

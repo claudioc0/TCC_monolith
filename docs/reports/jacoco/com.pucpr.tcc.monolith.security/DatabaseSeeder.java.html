@@ -16,20 +16,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 <span class="fc" id="L16">        return args -&gt; {</span>
 <span class="pc bpc" id="L17" title="1 of 2 branches missed.">            if (userRepository.findByEmail(&quot;admin@tcc.com&quot;).isEmpty()) {</span>
 <span class="fc" id="L18">                User admin = new User(</span>
-<span class="fc" id="L19">                        &quot;Administrador&quot;,</span>
-<span class="fc" id="L20">                        &quot;admin@tcc.com&quot;,</span>
+                        &quot;Administrador&quot;,
+                        &quot;admin@tcc.com&quot;,
 <span class="fc" id="L21">                        passwordEncoder.encode(&quot;admin123&quot;),</span>
-<span class="fc" id="L22">                        UserRole.ADMIN</span>
+                        UserRole.ADMIN
                 );
 <span class="fc" id="L24">                userRepository.save(admin);</span>
             }
 
 <span class="pc bpc" id="L27" title="1 of 2 branches missed.">            if (userRepository.findByEmail(&quot;joao@email.com&quot;).isEmpty()) {</span>
 <span class="fc" id="L28">                User customer = new User(</span>
-<span class="fc" id="L29">                        &quot;João Silva&quot;,</span>
-<span class="fc" id="L30">                        &quot;joao@email.com&quot;,</span>
+                        &quot;João Silva&quot;,
+                        &quot;joao@email.com&quot;,
 <span class="fc" id="L31">                        passwordEncoder.encode(&quot;cliente123&quot;),</span>
-<span class="fc" id="L32">                        UserRole.CUSTOMER</span>
+                        UserRole.CUSTOMER
                 );
 <span class="fc" id="L34">                userRepository.save(customer);</span>
             }

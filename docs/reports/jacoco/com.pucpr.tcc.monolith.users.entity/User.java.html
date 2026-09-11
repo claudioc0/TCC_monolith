@@ -34,9 +34,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
+<span class="fc" id="L37">    @Enumerated(EnumType.STRING)</span>
     @Column(nullable = false)
-<span class="fc" id="L39">    private UserRole role = UserRole.CUSTOMER;</span>
+    private UserRole role = UserRole.CUSTOMER;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

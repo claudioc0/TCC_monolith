@@ -7,7 +7,7 @@
 public class InsufficientStockException extends RuntimeException {
     public InsufficientStockException(Long productId, int requested, int available) {
 <span class="fc" id="L9">        super(String.format(</span>
-<span class="fc" id="L10">            &quot;Estoque insuficiente para o produto id=%d. Solicitado: %d, Disponível: %d.&quot;,</span>
+            &quot;Estoque insuficiente para o produto id=%d. Solicitado: %d, Disponível: %d.&quot;,
 <span class="fc" id="L11">            productId, requested, available</span>
         ));
 <span class="fc" id="L13">    }</span>

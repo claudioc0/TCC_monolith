@@ -1,6 +1,6 @@
 # E-commerce TCC — Sistema de Gestão de Pedidos
 
-![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?logo=spring&logoColor=white)
 ![JUnit5](https://img.shields.io/badge/tests-JUnit5-25A162?logo=junit5&logoColor=white)
 ![ArchUnit](https://img.shields.io/badge/architecture-ArchUnit-blue)
@@ -15,7 +15,7 @@ microsserviços: [`TCC_microservice`](https://github.com/claudioc0/TCC_microserv
 
 | Tecnologia | Versão | Uso |
 |---|---|---|
-| Java | 17 | Linguagem |
+| Java | 21 | Linguagem |
 | Spring Boot | 3.2.0 | Framework base |
 | Spring Security | 6.x | Autenticação e autorização |
 | JJWT | 0.11.5 | Geração e validação de JWT |
@@ -25,7 +25,7 @@ microsserviços: [`TCC_microservice`](https://github.com/claudioc0/TCC_microserv
 
 ## Como executar
 
-**Pré-requisito único: JDK 17.** Não é preciso instalar o Maven — o projeto
+**Pré-requisito único: JDK 21.** Não é preciso instalar o Maven — o projeto
 inclui o Maven Wrapper (`mvnw` / `mvnw.cmd`), que baixa a versão correta do
 Maven na primeira execução.
 

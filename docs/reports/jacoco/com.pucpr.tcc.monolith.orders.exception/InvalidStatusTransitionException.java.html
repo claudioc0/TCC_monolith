@@ -9,8 +9,8 @@ import com.pucpr.tcc.monolith.orders.entity.OrderStatus;
 public class InvalidStatusTransitionException extends RuntimeException {
     public InvalidStatusTransitionException(Long orderId, OrderStatus current, OrderStatus next) {
 <span class="fc" id="L11">        super(String.format(</span>
-<span class="fc" id="L12">            &quot;Transição de status inválida para o pedido %d: %s → %s não é permitida.&quot;,</span>
-<span class="fc" id="L13">            orderId, current, next</span>
+            &quot;Transição de status inválida para o pedido %d: %s → %s não é permitida.&quot;,
+            orderId, current, next
         ));
 <span class="fc" id="L15">    }</span>
 }

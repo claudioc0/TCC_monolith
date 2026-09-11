@@ -55,13 +55,13 @@ public class ReportService {
 <span class="fc" id="L55">        BigDecimal totalRevenue = orderService.sumRevenueByPeriod(start, end);</span>
 
 <span class="fc" id="L57">        return new SalesReportResponse(</span>
-<span class="fc" id="L58">            startDate,</span>
-<span class="fc" id="L59">            endDate,</span>
-<span class="fc" id="L60">            totalOrders,</span>
-<span class="fc" id="L61">            deliveredOrders,</span>
-<span class="fc" id="L62">            canceledOrders,</span>
-<span class="fc" id="L63">            totalRevenue,</span>
-<span class="fc" id="L64">            orders</span>
+            startDate,
+            endDate,
+            totalOrders,
+            deliveredOrders,
+            canceledOrders,
+            totalRevenue,
+            orders
         );
     }
 }

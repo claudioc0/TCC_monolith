@@ -39,8 +39,10 @@ a cada `mvn clean`) — esta pasta é uma cópia manual do estado mais recente.
   diferentes no tempo).
 - **`Relatorio-*.docx`** — versões completas em Word das três medições acima,
   produzidas de forma independente por outro integrante do grupo (mesma
-  metodologia, ambiente JDK 21 em vez de JDK 17); os `.md` desta pasta
-  incorporam as correções e achados desses documentos.
+  metodologia; na época, ambiente JDK 21 em vez de JDK 17 — desde
+  2026-09-11 o monólito também usa JDK 21, por padronização pedida pelo
+  orientador, então essa diferença específica não existe mais); os `.md`
+  desta pasta incorporam as correções e achados desses documentos.
 - **`TCC_Métricas.docx`** — rascunho histórico (commit `e72507d`, 63 testes,
   2026-08-07), anterior a todas as correções registradas nesta pasta; números
   do monólito nele estão **superados**, não usar como valor atual (ver nota

@@ -62,14 +62,14 @@ public class OrderService {
 
             // Cria o item com snapshot do preço atual
 <span class="fc" id="L64">            OrderItem item = new OrderItem(</span>
-<span class="fc" id="L65">                order,</span>
+                order,
 <span class="fc" id="L66">                product.id(),</span>
 <span class="fc" id="L67">                product.name(),</span>
 <span class="fc" id="L68">                product.price(),</span>
 <span class="fc" id="L69">                itemReq.quantity()</span>
             );
 <span class="fc" id="L71">            order.addItem(item);</span>
-        }
+<span class="fc" id="L72">        }</span>
 
 <span class="fc" id="L74">        return OrderResponse.from(orderRepository.save(order));</span>
     }
@@ -158,7 +158,7 @@ public class OrderService {
         // Devolve o estoque de cada item
 <span class="fc bfc" id="L159" title="All 2 branches covered.">        for (OrderItem item : order.getItems()) {</span>
 <span class="fc" id="L160">            productService.increaseStock(item.getProductId(), item.getQuantity());</span>
-        }
+<span class="fc" id="L161">        }</span>
 
 <span class="fc" id="L163">        return OrderResponse.from(orderRepository.save(order));</span>
     }

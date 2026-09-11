@@ -37,14 +37,15 @@ para aumentar assertividade aqui. As que são, em ordem de valor:
    repetição local teria revelado.
 3. **Alinhar o protocolo de medição entre monólito e microsserviços** — pesa
    mais na validade da comparação final do que qualquer repetição adicional
-   de qualquer um dos lados. Duas divergências de protocolo tinham sido
-   registradas como ameaça à validade: versão do PITest e critério de
-   exclusão de classes de bootstrap/seed do escopo de mutação. A primeira já
-   foi resolvida — o monólito passou a usar PITest 1.15.3, igual à versão em
-   microsserviços, e o resultado saiu **idêntico** ao da versão anterior
-   (141/171, mesmos 3 sobreviventes): a divergência de ambiente registrada
-   antes nunca foi causada pela versão do PITest, e sim pelo JDK (17 vs. 21).
-   A segunda (critério de exclusão) segue em aberto — ver `mutation-score.md`.
+   de qualquer um dos lados. Três divergências de protocolo foram
+   registradas como ameaça à validade ao longo do projeto: versão do
+   PITest, critério de exclusão de classes de bootstrap/seed do escopo de
+   mutação, e a versão do JDK. As três já foram resolvidas: PITest alinhado
+   em 1.15.3 (resultado idêntico ao de antes — a divergência de ambiente
+   nunca foi causada pela versão do PITest), exclusão de classes removida
+   (o score real era 1,5 p.p. menor do que o reportado), e o JDK padronizado
+   em 21 por pedido do orientador (2026-09-11) — ver `mutation-score.md`
+   para o efeito de cada mudança.
 
 **Recomendação prática adotada:** manter as 3 rodadas locais como evidência de
 determinismo, contar a replicação do Eric como a segunda camada de rigor, e
@@ -81,12 +82,23 @@ de mutação. 4 mutantes de diferença em 171 (≈2,3%) é magnitude pequena e
 plausível para essa causa, e é um fenômeno documentado na literatura de
 mutation testing em nível de bytecode.
 
-O critério de desempate aqui não é "quem está certo", é qual ambiente bate
-com o que o projeto declara: `<java.version>17</java.version>` no `pom.xml`
-torna JDK 17 o valor de referência. O achado do Eric não foi descartado — virou
+Na época, o critério de desempate era qual ambiente batia com o que o
+projeto declarava: `<java.version>17</java.version>` no `pom.xml` tornava
+JDK 17 o valor de referência. O achado do Eric não foi descartado — virou
 uma nota de reprodutibilidade registrada em `mutation-score.md`: "rode a
 mesma suíte" não basta como instrução de replicação; o JDK usado precisa
 estar declarado junto do número.
+
+> **Atualização (2026-09-11):** por pedido do orientador, essa divergência
+> deixou de ser só documentada e foi **eliminada** — o monólito migrou para
+> JDK 21, o mesmo ambiente que o Eric já usava. Não foi mais preciso
+> escolher "qual lado é a referência": os dois convergiram para o mesmo. O
+> efeito, medido diretamente (não mais inferido): mutation score do
+> monólito caiu de 81,0% (141/174, em JDK 17) para 80,6% (137/170, em
+> JDK 21) — 4 mutantes a menos, mesmos 6 sobreviventes, nenhuma conclusão
+> qualitativa muda. Esta seção fica como registro do raciocínio usado
+> *antes* de decidir migrar, não como o estado atual do projeto — ver
+> `mutation-score.md` e `resultados-finais.md` para os números vigentes.
 
 ### 2.3 Mutation score — mortos: 140 (medição própria, antes) vs. 136 (Eric) → 141 (medição própria, depois) — **não é discrepância de medição, é sequência temporal**
 
