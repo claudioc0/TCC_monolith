@@ -117,14 +117,45 @@ completa desses tipos (para métricas como DIT/NOC) pode ser menos precisa.
 Para CBO especificamente — o que importa aqui — o efeito é mínimo, mas fica
 registrado como decisão de metodologia, não escondida.
 
-## Ainda em aberto: comparação com microsserviços
+## Comparação com microsserviços
 
-Este relatório instrumenta a métrica **só do lado do monólito** — a Question
-4 do protocolo GQM ("o esforço de isolamento/mock aumenta ou diminui com a
-decomposição?") só pode ser respondida com o mesmo dado coletado do lado de
-microsserviços, com a mesma ferramenta. Isso ainda não existe. Ver
-`resultados-finais.md`, ameaça à validade nº 3, para o estado atualizado
-dessa pendência.
+O lado de microsserviços rodou `ck` 0.7.0 (mesma versão) sobre os 4 serviços
+em 2026-09-13, respondendo a Question 4 do protocolo GQM:
+
+| Serviço | Classes | CBO médio | CBO máximo |
+|---|---:|---:|---:|
+| user-service | 13 | 6,77 | 14 (`UserService`) |
+| product-service | 10 | 7,10 | 17 (`ProductController`) |
+| order-service | 16 | 6,69 | 19 (`OrderController`) |
+| report-service | 9 | 6,22 | 11 (`SecurityConfig`) |
+| **Agregado (microsserviços)** | **48** | **6,71** | — |
+| **Monólito** | **29** | **7,45** | 16 (`OrderController`) |
+
+**Leitura honesta do número, não só o número em si:**
+
+1. **Parte da queda é troca de tipo de acoplamento, não redução real.**
+   Uma dependência funcional entre domínios que no monólito é injeção de
+   objeto (`OrderService` → `ProductService`, CBO direto) virou, em
+   microsserviços, uma classe cliente HTTP (`ProductClient`, CBO 9;
+   `OrderClient`, CBO 7) — acoplamento de contrato de rede, que o CBO não
+   mede. Reportar só "6,71 < 7,45, logo microsserviços é mais desacoplado"
+   contaria uma história incompleta.
+2. **Os denominadores não são diretamente comparáveis.** 29 classes contra
+   48 — a decomposição em 4 serviços naturalmente duplica infraestrutura
+   (cada serviço tem seu próprio `SecurityConfig`, suas próprias exceptions,
+   etc.), o que dilui a média para baixo mecanicamente, independente de
+   qualquer redução real de acoplamento de negócio. Comparar CBO médio por
+   **camada** (`controller` com `controller`, `service` com `service`)
+   controla parcialmente esse efeito melhor do que comparar só o agregado.
+3. **O padrão por camada se repete dos dois lados:** `controller` continua
+   sendo a camada mais acoplada em ambos (`OrderController` é o CBO máximo
+   tanto no monólito, 16, quanto — de forma ainda mais acentuada — em
+   microsserviços, 19) — consistente com a leitura da seção anterior de que
+   é a camada que mais orquestra colaboradores, independente da arquitetura.
+
+Detalhe completo do lado de microsserviços:
+[`FECHAMENTO_PENDENCIAS-microservicos.md`](./FECHAMENTO_PENDENCIAS-microservicos.md),
+item 2, e o `acoplamento-cbo.md` equivalente no repositório deles.
 
 ## Metodologia
 

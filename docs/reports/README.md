@@ -32,8 +32,12 @@ a cada `mvn clean`) — esta pasta é uma cópia manual do estado mais recente.
   versão em microsserviços.
 - **[`acoplamento-cbo.md`](./acoplamento-cbo.md)** — relatório de CBO
   (Coupling Between Objects, ferramenta `ck`) por classe e por camada; a
-  quarta métrica do protocolo GQM, instrumentada só do lado do monólito até
-  agora.
+  quarta métrica do protocolo GQM, com comparativo completo contra
+  microsserviços (fechado em 2026-09-13).
+- **[`FECHAMENTO_PENDENCIAS-microservicos.md`](./FECHAMENTO_PENDENCIAS-microservicos.md)** —
+  resposta do lado de microsserviços às 3 pendências registradas em
+  `../pendencias-microservicos.md` (JDK 21, CBO, testes de integração) —
+  todas fechadas.
 - **[`execution-log.md`](./execution-log.md)** — log acumulado de execuções
   das três métricas, para evidenciar determinismo/ausência de flakiness.
 - **[`replicacao-e-determinismo.md`](./replicacao-e-determinismo.md)** —

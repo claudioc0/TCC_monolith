@@ -134,11 +134,11 @@ eliminando essa variável em vez de só documentá-la. Não houve necessidade de
 decidir "qual dos dois é a referência" — a decisão foi convergir para o
 mesmo ambiente que o outro lado já usava.
 
-> **Pendência de escopo (fora deste repositório):** a padronização em JDK 21
-> precisa ser declarada formalmente também no `pom.xml` de microsserviços
-> (o Eric já *usa* 21 ao rodar, mas o projeto de lá pode não *declarar* essa
-> versão) — registrado aqui como pendência de alinhamento entre os dois
-> lados, não uma tarefa deste repositório.
+> **Atualização (2026-09-13):** a padronização em JDK 21 também foi
+> declarada formalmente no `pom.xml` dos 4 serviços de microsserviços,
+> confirmada com `mvn -version` e revalidada com `mvn clean test` (171
+> testes, 0 falhas) — ver `FECHAMENTO_PENDENCIAS-microservicos.md`. Não há
+> mais pendência de ambiente entre os dois lados.
 
 ## Uma ameaça resolvida, outra fechada nesta rodada
 

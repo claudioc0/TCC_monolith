@@ -18,7 +18,7 @@ no `pom.xml`) — ver seção "Ambiente" abaixo.
 | Branch Coverage | JaCoCo 0.8.11 | **34/42 = 81,0%** (73,8% só com os 69 testes de unidade — ver ameaça 4) | meta do protocolo: 100% (fonte: `TCC_Métricas.docx`, não confirmada em outro documento — ver observação abaixo) |
 | Mutation Score | PITest 1.15.3 | **137/170 = 80,6%** (Test Strength 137/143 = 95,8%) | sem meta fixa; comparativo entre arquiteturas |
 | Violações Arquiteturais | ArchUnit 1.2.1 | **0/7 regras** | meta do protocolo: 0 |
-| Acoplamento (CBO) | `ck` 0.7.0 | **CBO médio 7,45** (29 classes; `controller` mais acoplado, 12,2; `exception` menos, 2,8) | sem meta fixa; só monólito medido até agora — ver ameaça 3 |
+| Acoplamento (CBO) | `ck` 0.7.0 | **CBO médio 7,45** (monólito, 29 classes) vs. **6,71** (microsserviços, 48 classes) | sem meta fixa; comparativo entre arquiteturas — ver ameaça 3 |
 
 > A meta de "100% de branch coverage" citada na tabela veio de uma frase do
 > `TCC_Métricas.docx` ("o protocolo do experimento define como meta 100% dos
@@ -118,19 +118,31 @@ atualizado antes de usar como fonte para o capítulo de metodologia do TCC.
 
 ## Ameaças à validade — estado atual
 
+**Todas as ameaças registradas ao longo do projeto estão resolvidas dos
+dois lados** desde 2026-09-13 (fechamento pelo lado de microsserviços —
+ver [`pendencias-microservicos.md`](../pendencias-microservicos.md) e
+[`FECHAMENTO_PENDENCIAS-microservicos.md`](./FECHAMENTO_PENDENCIAS-microservicos.md)).
+
 | # | Ameaça | Status |
 |---|---|---|
 | 1 | Versão do PITest divergente entre monólito e microsserviços (1.15.8 vs. 1.15.3) | **Resolvida** — monólito alinhado a 1.15.3, resultado idêntico |
 | 2 | Critério de exclusão de classes no PITest (`MonolithApplication`, `DatabaseSeeder`, `architecture.*` excluídos do monólito; sem exclusão documentada em microsserviços) | **Resolvida (2026-09-04)** — exclusão removida; confirmado que ela inflava o score em 1,5 p.p. (82,5% → 81,0%), só por causa de `DatabaseSeeder` |
-| 3 | Métrica de CBO/acoplamento estrutural (Question 4 do GQM, `TCC_Métricas.docx` Parte II) | **Instrumentada do lado do monólito (2026-09-13)** — CBO médio 7,45 (29 classes), ver `acoplamento-cbo.md`. Ainda não é comparativo: falta o mesmo dado em microsserviços, fora deste repositório |
-| 4 | Assimetria de esforço de teste entre monólito (4 testes de integração `@SpringBootTest`) e microsserviços (segundo o relatório deles, nenhum) | **Quantificada (2026-09-04), não eliminável unilateralmente** — os 4 testes de integração respondem por 7,1 p.p. de branch coverage (81,0% completa vs. 73,8% só unidade); documentado para reportar as duas leituras lado a lado em vez de esconder a assimetria |
-| 5 | Divergência de JDK entre monólito (declarava 17) e a verificação do Eric (usava 21) | **Resolvida (2026-09-11)** — projeto migrado para JDK 21 por pedido do orientador; mutation score recalculado (137/170 = 80,6%), branch coverage e violações inalterados. **Pendência fora deste repositório:** o `pom.xml` de microsserviços também precisa declarar 21 formalmente. |
+| 3 | Métrica de CBO/acoplamento estrutural (Question 4 do GQM, `TCC_Métricas.docx` Parte II) | **Resolvida (2026-09-13)** — comparativo completo: monólito 7,45 (29 classes) vs. microsserviços 6,71 (48 classes), ver `acoplamento-cbo.md`, seção "Comparação com microsserviços" |
+| 4 | Assimetria de esforço de teste entre monólito (4 testes de integração `@SpringBootTest`) e microsserviços (nenhum, até então) | **Resolvida (2026-09-13, Opção A)** — microsserviços escreveu os 4 testes de integração equivalentes; branch coverage subiu em 2 dos 4 serviços (user-service 87%→100%, order-service 92%→96,4%) |
+| 5 | Divergência de JDK entre monólito (declarava 17) e a verificação do Eric (usava 21) | **Resolvida (2026-09-11/13)** — monólito migrado em 09-11; microsserviços declarou 21 formalmente nos 4 `pom.xml` em 09-13, revalidado com `clean test` |
 
 Detalhe da ameaça 2: `mutation-score.md`, seção "Uma ameaça resolvida, outra
 fechada nesta rodada". Detalhe da ameaça 4: `cobertura-codigo.md`, seção
 "Comparação com a versão em microsserviços". Detalhe da ameaça 5:
 `mutation-score.md`, seção "Ambiente: por que a padronização em JDK 21
 aconteceu".
+
+**Nota de verificação:** os números do fechamento de microsserviços
+(itens 3, 4 e 5) vêm do relatório deles, não foram reproduzidos
+independentemente a partir do código-fonte deles — mesmo status
+epistêmico que os relatórios originais do Eric antes de serem
+verificados. A aritmética declarada (média ponderada de CBO por serviço)
+foi conferida e bate com o agregado reportado (6,71).
 
 ## Ambiente
 
@@ -167,13 +179,15 @@ resolvida (não só documentada).
 | Números por pacote, ramos ainda sem cobertura | `cobertura-codigo.md` |
 | Mutantes SURVIVED individuais, mutation score por pacote | `mutation-score.md` |
 | As 7 regras de arquitetura, as 11 violações históricas | `violacoes-arquiteturais.md` |
-| CBO por classe e por camada, discussão e limitações | `acoplamento-cbo.md` |
+| CBO por classe e por camada, comparação com microsserviços | `acoplamento-cbo.md` |
 | Log rodada a rodada (datas, commits, resultados) | `execution-log.md` |
 | Metodologia de quantas rodadas e como classificar divergências | `replicacao-e-determinismo.md` |
+| Pendências entregues ao lado de microsserviços e como foram fechadas | `../pendencias-microservicos.md`, `FECHAMENTO_PENDENCIAS-microservicos.md` |
 | Versão publicada, navegável, com narrativa e gráficos | [Artifact publicado](https://claude.ai/code/artifact/eebc5cef-cbdf-4b91-9075-5eb370e4e46c) |
 
 ## Próxima atualização deste arquivo
 
-Atualizar quando: (a) microsserviços rodar CBO (`ck`) e PITest e o
-comparativo final entrar em pauta, ou (b) qualquer um dos números da tabela
-consolidada mudar.
+Todas as ameaças à validade conhecidas estão resolvidas dos dois lados
+(2026-09-13). Atualizar quando: (a) o capítulo de comparação estatística
+final entre as arquiteturas for escrito, ou (b) qualquer um dos números da
+tabela consolidada mudar.
