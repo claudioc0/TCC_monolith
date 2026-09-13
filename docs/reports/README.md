@@ -30,6 +30,10 @@ a cada `mvn clean`) — esta pasta é uma cópia manual do estado mais recente.
   relatório de violações arquiteturais (ArchUnit) em Markdown: as 7 regras,
   as 11 violações encontradas e corrigidas, estado atual, comparação com a
   versão em microsserviços.
+- **[`acoplamento-cbo.md`](./acoplamento-cbo.md)** — relatório de CBO
+  (Coupling Between Objects, ferramenta `ck`) por classe e por camada; a
+  quarta métrica do protocolo GQM, instrumentada só do lado do monólito até
+  agora.
 - **[`execution-log.md`](./execution-log.md)** — log acumulado de execuções
   das três métricas, para evidenciar determinismo/ausência de flakiness.
 - **[`replicacao-e-determinismo.md`](./replicacao-e-determinismo.md)** —
@@ -47,12 +51,15 @@ a cada `mvn clean`) — esta pasta é uma cópia manual do estado mais recente.
   2026-08-07), anterior a todas as correções registradas nesta pasta; números
   do monólito nele estão **superados**, não usar como valor atual (ver nota
   em `resultados-finais.md`). A "Parte II" tem conteúdo próprio ainda não
-  duplicado aqui (formalização GQM, métrica de CBO pendente de
-  instrumentação, dados de microsserviços de 2026-08-07).
+  duplicado aqui (formalização GQM, dados de microsserviços de 2026-08-07) —
+  a métrica de CBO citada lá como pendente já foi instrumentada
+  (`acoplamento-cbo.md`).
 - **`jacoco/index.html`** — relatório bruto de Branch Coverage (HTML,
   navegável por pacote/classe/linha).
 - **`pitest/index.html`** — relatório bruto de Mutation Score (HTML, com o
   detalhe de cada mutante gerado e qual teste o matou).
+- **`ck/class.csv`, `ck/method.csv`** — dados brutos de CBO (e demais
+  métricas CK) por classe e por método, gerados pela ferramenta `ck`.
 
 ## Como reproduzir
 
@@ -73,5 +80,6 @@ respectivamente; esta pasta é uma cópia manual do estado mais recente.
 | Suíte de testes de arquitetura (ArchUnit) | `src/test/java/.../architecture/` |
 | Testes unitários (JUnit 5) | `src/test/java/.../*ServiceTest.java`, `GlobalExceptionHandlerTest`, `JwtAuthenticationFilterTest`, `ApplicationConfigTest`, `SecurityConfigTest` |
 | Testes de integração (JUnit 5 + MockMvc) | `src/test/java/.../integration/*IntegrationTest.java` |
+| Métrica de acoplamento (CBO) | `ck/class.csv`, `acoplamento-cbo.md` |
 | Documento de métricas do monólito | [Artifact publicado](https://claude.ai/code/artifact/eebc5cef-cbdf-4b91-9075-5eb370e4e46c) |
 | Repositório Git organizado | este repositório (`.gitignore`, `target/` destrackeado, raiz correta) |

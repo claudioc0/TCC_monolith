@@ -52,12 +52,19 @@ consecutivas (idênticas byte a byte) além da comparação percentual — ver
 | 4 | 2026-08-28 | (após fechar o gap `OrderStatus`) | JDK 17 | 141/171 | 82,5% | mutante `OrderStatus$2.canTransitionTo` (encontrado por verificação independente) foi morto |
 | 5 | 2026-09-04 | (PITest 1.15.8 → 1.15.3, alinhado com microsserviços) | JDK 17 | 141/171 | 82,5% | resultado idêntico à rodada 4, mutante a mutante; confirma que a versão do PITest não era a causa da divergência de ambiente (era o JDK) |
 | 6 | 2026-09-04 | (exclusão de `MonolithApplication`/`DatabaseSeeder`/`architecture.*` removida do `pom.xml`) | JDK 17 | 141/174 | 81,0% | 3 mutantes novos, todos em `DatabaseSeeder`, todos `SURVIVED`; confirma que a exclusão inflava o score em 1,5 p.p.; repetido 2×, resultado idêntico mutante a mutante nas duas |
-| 7 | 2026-09-11 | (migração para JDK 21, pedido do orientador) | JDK 21 | **137/170** | **80,6%** | **valor de referência atual** — 4 mutantes a menos que em JDK 17 (bytecode diferente em `orders.entity` e `security`), mesmos 6 sobreviventes de antes; elimina a divergência de ambiente com a verificação do Eric |
+| 7 | 2026-09-11 | (migração para JDK 21, pedido do orientador) | JDK 21 | 137/170 | 80,6% | 4 mutantes a menos que em JDK 17 (bytecode diferente em `orders.entity` e `security`), mesmos 6 sobreviventes de antes; elimina a divergência de ambiente com a verificação do Eric |
+| 8 | 2026-09-12 | `1c05487` (terceira máquina, integrante Vinicius) | JDK 21 | **137/170** | **80,6%** | **valor de referência atual** — verificação independente em máquina separada; idêntico mutante a mutante à rodada 7, incluindo o tipo de mutador de cada um dos 6 sobreviventes (checado individualmente, não só o agregado) |
 
 A rodada 7 substitui a comparação "JDK 17 (referência) vs. JDK 21 (Eric)"
 que existia antes — agora os dois lados usam o mesmo ambiente, então deixou
 de ser uma ameaça à validade e passou a ser só um dado histórico (ver
-`replicacao-e-determinismo.md`, seção 2.2).
+`replicacao-e-determinismo.md`, seção 2.2). A rodada 8 é a terceira
+confirmação independente do mesmo resultado (própria, Eric originalmente,
+e agora Vinicius em JDK 21) — a primeira tentativa dele (registrada à parte)
+reproduziu por engano o estado *anterior* à rodada 6 (171/141, 3
+sobreviventes) por não ter recompilado do zero depois de mudar o
+`<java.version>` manualmente; corrigido com `git pull` + `mvnw clean test`
+antes de repetir.
 
 Determinismo: verificado mutante a mutante (não só o agregado) entre
 execuções — mesmo conjunto de mutantes, mesmo status para cada um, em todas
