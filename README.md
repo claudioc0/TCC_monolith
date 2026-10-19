@@ -279,8 +279,8 @@ equalizada com o mesmo critério da versão em microsserviços:
 |---|---|
 | Testes (JUnit 5) | **180/180**, 0 falhas — 33 entidade, 33 service (Mockito), 40 controller (`@WebMvcTest`), 26 security, 9 exception handler, 10 arquitetura (ArchUnit), 29 integração (`@SpringBootTest`) |
 | Branch Coverage (JaCoCo) | **97,6%** (41/42) |
-| Mutation Score (PITest) | **98,3%** (171/174 mortos, 0 sem cobertura) |
-| Violações arquiteturais (ArchUnit) | **0/10** regras ativas (8 violações reais documentadas, não corrigidas — ver `docs/reports/monolito-violacoes-arquiteturais.md`) |
+| Mutation Score (PITest) | **98,2%** (167/170 mortos, 0 sem cobertura) |
+| Violações arquiteturais (ArchUnit) | **10 regras, 8 violações reais documentadas** (não corrigidas, não escondidas por afrouxamento de regra — ver `docs/reports/monolito-violacoes-arquiteturais.md`) |
 
 ```bash
 ./mvnw test                                        # testes + JaCoCo (target/site/jacoco/index.html)

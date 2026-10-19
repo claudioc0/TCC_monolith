@@ -8,24 +8,42 @@ estado anterior e à versão usada nos microsserviços)
 **Critério medido:** fração de mutantes (alterações sintáticas mínimas no
 bytecode) que a suíte mata ao falhar diante deles.
 
+> **Correção de metodologia (reprodução independente, 2026-10-19):** a
+> primeira versão deste relatório reportava 171/174 (98,3%). Esse número
+> estava **contaminado por um build sujo**: o `target/classes` da máquina de
+> desenvolvimento acumulava bytecode recompilado incrementalmente pela IDE
+> entre uma sessão e outra, sem um `mvn clean` antes das medições. Como o
+> total de mutantes depende só do bytecode de produção (nenhuma classe em
+> `src/main` foi alterada nesta rodada), ele não deveria mudar — e a
+> divergência (174 vs. o 170 histórico) foi o sinal de que havia uma
+> variável de ambiente não controlada. Reproduzido do zero com
+> `mvn clean test` / `mvn clean org.pitest:pitest-maven:mutationCoverage`,
+> tanto numa worktree limpa do commit baseline (`9a389db`) quanto na branch
+> desta equalização: o total correto é **170** mutantes em ambos os
+> estados — idêntico ao baseline, como era de se esperar. Os números
+> corrigidos abaixo substituem os publicados antes; os 3 sobreviventes
+> residuais são exatamente os mesmos (mesma classe/método/linha/mutador),
+> então nenhuma conclusão qualitativa muda — só o denominador.
+
 ## Resultado geral: Antes → Depois
 
 | Status | Antes | Depois |
 |---|---|---|
-| `KILLED` | 137 (80,6%) | **171 (98,3%)** |
+| `KILLED` | 137 (80,6%) | **167 (98,2%)** |
 | `NO_COVERAGE` | 27 (15,9%) | **0 (0,0%)** |
-| `SURVIVED` | 6 (3,5%) | **3 (1,7%)** |
-| **Total gerado** | **170** | **174** |
+| `SURVIVED` | 6 (3,5%) | **3 (1,8%)** |
+| **Total gerado** | **170** | **170** |
+
+O total de mutantes gerados **não muda** entre antes e depois — é esperado,
+já que nenhuma classe de produção foi alterada; só o comportamento da suíte
+de testes mudou. (Ver a nota de correção acima: a primeira versão deste
+relatório reportava, por engano, 174.)
 
 **Test Strength** (mortos ÷ alcançados — isola a qualidade das asserções do
 que simplesmente foi "tocado" por algum teste): antes 137/143 = 95,8%;
-depois **171/174 = 98,3%**. Com `NO_COVERAGE` zerado, test strength e
+depois **167/170 = 98,2%**. Com `NO_COVERAGE` zerado, test strength e
 mutation score convergem para o mesmo número — não sobra mais nenhum
 mutante "tocado mas não verificado".
-
-O total subiu de 170 para 174 mutantes gerados mesmo sem nenhuma alteração
-de produção; já confirmado como estável nas duas rodadas de PITest desta
-verificação (ver "Determinismo" abaixo) — não é ruído de uma única execução.
 
 ## Mutation score por pacote
 
@@ -34,7 +52,7 @@ verificação (ver "Determinismo" abaixo) — não é ruído de uma única execu
 | `exception` | 10/10 | 100,0% |
 | `orders.controller` | 6/6 | 100,0% |
 | `orders.dto` | 2/2 | 100,0% |
-| `orders.entity` | 29/29 | 100,0% |
+| `orders.entity` | 26/26 | 100,0% |
 | `orders.service` | 17/17 | 100,0% |
 | `products.controller` | 7/7 | 100,0% |
 | `products.dto` | 1/1 | 100,0% |
@@ -46,8 +64,8 @@ verificação (ver "Determinismo" abaixo) — não é ruído de uma única execu
 | `users.dto` | 2/2 | 100,0% |
 | `users.entity` | 12/12 | 100,0% |
 | `users.service` | 9/9 | 100,0% |
-| `security` | 42/45 | 93,3% |
-| **Total** | **171/174** | **98,3%** |
+| `security` | 41/44 | 93,2% |
+| **Total** | **167/170** | **98,2%** |
 
 Todos os pacotes chegaram a 100% nesta rodada, exceto `security` — e os 3
 pontos que faltam nele são exatamente os 3 residuais documentados abaixo,
@@ -92,25 +110,31 @@ cobri-lo nesta rodada:
 
 ## Determinismo da medição
 
-PITest rodado **2 vezes** nesta verificação: ambas produziram exatamente
-171 `KILLED` / 3 `SURVIVED` / 0 `NO_COVERAGE`, com o **mesmo conjunto de 3
-sobreviventes, mutante a mutante** (mesma classe, método, linha e mutador em
-`target/pit-reports/mutations.xml` nas duas execuções). Ver `execution-log.md`.
+PITest rodado **2 vezes** com `mvn clean` antes de cada rodada (a limpeza é
+obrigatória — ver a nota de correção no topo desta página): ambas
+produziram exatamente 167 `KILLED` / 3 `SURVIVED` / 0 `NO_COVERAGE`, com o
+**mesmo conjunto de 3 sobreviventes, mutante a mutante** (mesma classe,
+método, linha e mutador em `target/pit-reports/mutations.xml` nas duas
+execuções). A mesma verificação foi repetida numa worktree Git separada,
+a partir do commit baseline (`9a389db`), confirmando 170/170 mutantes
+gerados ali — idêntico ao valor histórico documentado antes desta rodada.
+Ver `execution-log.md`.
 
 ## Comparação com o "antes"
 
 | Métrica | Antes | Depois |
 |---|---|---|
-| Mortos / Total | 137/170 | 171/174 |
-| Mutation Score | 80,6% | **98,3%** |
-| Test Strength | 95,8% | **98,3%** |
+| Mortos / Total | 137/170 | 167/170 |
+| Mutation Score | 80,6% | **98,2%** |
+| Test Strength | 95,8% | **98,2%** |
 | `NO_COVERAGE` | 27 | **0** |
 | `SURVIVED` | 6 | **3** (os 3 residuais de wiring/parser; os 3 outros do "antes" — `DatabaseSeeder` ×3 — foram mortos por `DatabaseSeederTest`, teste novo) |
 
 ## Metodologia
 
 ```bash
-mvn org.pitest:pitest-maven:mutationCoverage
+mvn clean org.pitest:pitest-maven:mutationCoverage
+# o "clean" não é opcional — ver a nota de correção no topo desta página
 # relatório navegável: target/pit-reports/index.html
 # dados brutos:        target/pit-reports/mutations.xml
 ```

@@ -60,7 +60,15 @@ byte do CSV).
 | Métrica | Antes | Depois |
 |---|---|---|
 | Branch coverage (ramos) | 34/42 = 81,0% | 41/42 = 97,6% |
-| Cobertura de linhas | 424/467 = 90,8% | ver `target/site/jacoco/jacoco.csv` desta rodada |
+| Cobertura de linhas | 407/450 = 90,4% | 448/450 = 99,6% |
+
+> **Correção (reprodução independente, 2026-10-19):** a primeira versão
+> deste relatório citava "424/467" para a cobertura de linhas do estado
+> "Antes", copiado do relatório pré-existente sem remedir. Reexecutando o
+> baseline (commit `9a389db`) numa worktree limpa, com `mvn clean test`, o
+> valor correto é **407/450** — confirmado também pela medição "Depois"
+> desta mesma rodada, que reporta o mesmo total de 450 linhas (produção não
+> mudou). O branch coverage (34/42 → 41/42) não foi afetado por este erro.
 
 Como já observado no relatório anterior, o sistema tem poucos ramos (42 no
 total) concentrados em três pontos — máquina de estados do pedido, validação

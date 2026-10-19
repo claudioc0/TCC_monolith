@@ -6,20 +6,43 @@
 **Critério medido:** densidade de violações — dependências reais no bytecode
 compilado que contradizem regras de arquitetura declaradas explicitamente.
 
+> **Correção de metodologia (reprodução independente, 2026-10-19):** a
+> primeira versão deste relatório embutia, nas duas regras novas com
+> violação real, uma exceção de escopo (predicado que excluía `User` do
+> alvo de `controllersShouldNotDependOnEntities`, e ampliação da lista de
+> pacotes permitidos em `repositoriesShouldOnlyBeAccessedByServices` para
+> incluir `..security..`) — chegando a "0 violações ativas em 10 regras".
+> Isso foi sinalizado, corretamente, como uma forma de afrouxar a regra
+> para o teste passar: as duas regras novas existem justamente *porque* a
+> versão em microsserviços as aplica sem nenhuma exceção, e relaxá-las aqui
+> torna o "0" do monólito incomparável com o "0" de lá — um não mede a
+> mesma coisa que o outro. **Corrigido**: as regras voltaram a ser
+> estritas, idênticas à versão usada nos microsserviços (nenhum pacote ou
+> classe excluído do predicado); em vez de depender do runner padrão do
+> ArchUnit (que falha a suíte em qualquer violação), os dois testes
+> avaliam a regra manualmente (`ArchRule#evaluate`) e **fixam o número
+> exato de violações conhecidas** via asserção — a suíte continua verde,
+> mas porque o número documentado bate com o real, não porque a regra foi
+> afrouxada. Se uma violação nova aparecer ou uma existente for corrigida,
+> o teste quebra, forçando atualizar este relatório conscientemente. Os
+> números de violações abaixo (5 e 3) não mudaram com a correção — só a
+> forma como a suíte os representa.
+
 ## Resultado: suíte × regras × violações
 
-| Suíte | Regras | Violações ativas (com escopo) | Violações reais encontradas |
+| Suíte | Regras | Violações | Como a suíte fica verde |
 |---|---|---|---|
-| `CommonArchitectureRulesTest` | 3 | 0 | 0 |
-| `DomainBoundaryArchitectureTest` | 4 | 0 | 0 |
-| `ParityArchitectureRulesTest` (nova, paridade com microsserviços) | 3 | 0 | **8** |
-| **Total** | **10** | **0** | **8** |
+| `CommonArchitectureRulesTest` | 3 | 0 | Regra realmente sem violação (`@ArchTest` padrão) |
+| `DomainBoundaryArchitectureTest` | 4 | 0 | Regra realmente sem violação (`@ArchTest` padrão, com exclusão documentada da camada de controller — ver nota de escopo já existente antes desta rodada) |
+| `ParityArchitectureRulesTest` (nova, paridade com microsserviços) | 3 | **8** (5 + 3) | 1 regra sem violação; 2 regras estritas com violação real, cujo número exato (5 e 3) é **fixado por asserção**, não zerado |
+| **Total** | **10** | **8** | — |
 
-"Violações ativas" é o que a suíte reporta rodando `mvn test` hoje — 0,
-suíte verde. "Violações reais encontradas" é o resultado de rodar as 3
-regras novas **sem** a exceção de escopo (feito uma vez, com um teste
-temporário, só para quantificar — não commitado): 8 ocorrências reais no
-código de produção atual, nenhuma corrigida.
+Diferente das regras 4–7 (que excluem a camada de controller do próprio
+predicado, uma decisão de escopo documentada desde antes desta rodada), as
+duas regras novas com violação **não têm nenhuma exceção no predicado**: o
+predicado é idêntico ao da versão em microsserviços. A suíte fica verde
+porque o teste pina o número conhecido de violações, não porque a regra foi
+redesenhada para não vê-las.
 
 ## As 10 regras (o que cada uma verifica)
 
@@ -39,11 +62,11 @@ código de produção atual, nenhuma corrigida.
 
 ### Regras novas de paridade com microsserviços (`ParityArchitectureRulesTest`)
 
-| # | Regra | O que verifica | Violações encontradas |
-|---|---|---|---|
-| 8 | `namingConventionShouldBeRespected` | `@RestController` termina em `Controller`, `@Service` em `Service`, `@Repository` em `Repository`. | **0** |
-| 9 | `repositoriesShouldOnlyBeAccessedByServices` | Classes em `..repository..` só são acessadas de `..repository..`/`..service..` (versão estrita — sem a exceção de `security` aplicada, para medir). | **3** |
-| 10 | `controllersShouldNotDependOnEntities` | Nenhuma classe `@RestController` **depende** de classe `@Entity` (mais forte que a regra 3: checa dependência, não só tipo de retorno). | **5** |
+| # | Regra | O que verifica | Violações reais | Como fica verde |
+|---|---|---|---|---|
+| 8 | `namingConventionShouldBeRespected` | `@RestController` termina em `Controller`, `@Service` em `Service`, `@Repository` em `Repository`. | **0** | Sem violação — `assertThat(violations).isEmpty()` |
+| 9 | `repositoriesShouldOnlyBeAccessedByServices` | Classes em `..repository..` só são acessadas de `..repository..`/`..service..` — **sem exceção de pacote**. | **3** | `assertThat(violations).hasSize(3)` |
+| 10 | `controllersShouldNotDependOnEntities` | Nenhuma classe `@RestController` **depende** de classe `@Entity` — **sem exceção de classe** (mais forte que a regra 3: checa dependência, não só tipo de retorno). | **5** | `assertThat(violations).hasSize(5)` |
 
 ## As 8 violações encontradas (quantas, em que classes, qual decisão)
 
@@ -66,10 +89,10 @@ corpo da requisição (ver o teste que fixa esse contrato em
 `monolito-testes-unitarios.md`). Trocar por um DTO exigiria reimplementar
 `UserDetails` ou mapear o principal manualmente em cada endpoint — mudança
 de produção maior que o problema que resolve, e motivada só por fazer um
-teste de arquitetura passar. A regra em si não foi enfraquecida: o escopo
-foi restrito a "qualquer entidade `@Entity`, exceto `User` nesses dois
-pontos nomeados", com a justificativa no Javadoc da regra — qualquer nova
-dependência de controller em outra entidade continua acusando violação.
+teste de arquitetura passar. A regra em si **não foi relaxada**: continua
+verificando qualquer classe `@RestController` contra qualquer classe
+`@Entity`, sem exclusão nenhuma; o teste apenas fixa que, hoje, há
+exatamente 5 ocorrências, todas nesses 3 pontos.
 
 ### `repositoriesShouldOnlyBeAccessedByServices` — 3 ocorrências
 
@@ -82,22 +105,21 @@ dependência de controller em outra entidade continua acusando violação.
 **Decisão:** documentar, não corrigir. É wiring de autenticação — o
 `UserDetailsService` do Spring Security precisa do repositório na própria
 definição do bean — e seed de dados de inicialização, não acoplamento de
-regra de negócio entre domínios. A regra final (a que roda em `mvn test`)
-amplia o escopo permitido para incluir `..security..`, com a mesma
-justificativa registrada no Javadoc da regra.
+regra de negócio entre domínios. A regra **não foi relaxada**: continua
+exigindo que repositórios só sejam acessados por `..repository..`/`..service..`,
+sem incluir `..security..` na lista de pacotes permitidos; o teste fixa que,
+hoje, há exatamente 3 ocorrências, todas nesses 2 pontos.
 
 ### `namingConventionShouldBeRespected` — 0 ocorrências
 
 Todas as classes anotadas já seguem a convenção — nenhuma decisão de escopo
 precisou ser tomada para esta regra.
 
-## Alterações em código de produção para chegar a 0 violações ativas
+## Alterações em código de produção
 
-**Nenhuma.** As duas regras com violação real tiveram seu **escopo**
-ajustado dentro do próprio arquivo de teste (`ignoreDependency`-equivalente
-via predicado customizado e ampliação da lista de pacotes permitidos), não o
-código em `src/main`. Mesmo padrão já usado em `DomainBoundaryArchitectureTest`
-para excluir a camada de controller das regras 4–7.
+**Nenhuma.** As 8 violações ficam registradas como dado do experimento, não
+corrigidas — nem a regra, nem o código de produção foram alterados para
+fazê-las desaparecer.
 
 ## Por que essa comparação importa (num monólito vs. num microsserviço)
 
@@ -113,7 +135,10 @@ as 8 ocorrências encontradas nesta rodada (5 de injeção de principal
 autenticado, 3 de wiring de autenticação) são exatamente o tipo de
 acoplamento que, no lado de microsserviços, nem chegaria a existir como
 possibilidade: `User` e `UserRepository` estão em processos/deployables
-diferentes dos controllers que os consumiriam indevidamente.
+diferentes dos controllers que os consumiriam indevidamente. Essa
+comparação só é válida porque as regras aqui são estritas — um "0" obtido
+afrouxando a regra teria escondido justamente o dado que a comparação
+precisa mostrar.
 
 ## Metodologia
 
@@ -122,8 +147,7 @@ mvn test
 # as 3 classes de arquitetura aparecem no Surefire como qualquer outra classe de teste
 ```
 
-Para reproduzir a contagem de "violações reais encontradas" (8), as duas
-regras com exceção de escopo podem ser rodadas com o predicado estrito
-(sem a exceção) — não commitado, usado só para esta medição; resultado
-reproduzido aqui com o detalhamento completo de classes/métodos/linhas
-acima, já suficiente para auditoria sem precisar recriar o teste temporário.
+Código-fonte: [`ParityArchitectureRulesTest.java`](../../src/test/java/com/pucpr/tcc/monolith/architecture/ParityArchitectureRulesTest.java) —
+usa `ArchRule#evaluate(JavaClasses)` + `EvaluationResult.getFailureReport().getDetails()`
+para as duas regras com violação conhecida, em vez do runner `@ArchTest`
+padrão (que trataria qualquer violação como falha de suíte).

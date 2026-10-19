@@ -134,32 +134,63 @@ Determinismo: 180/180 idêntico nas três execuções consecutivas.
 | # | Momento | Ambiente | Mortos | Score | Observação |
 |---|---|---|---|---|---|
 | 1 | Antes (baseline) | JDK 21 | 137/170 | 80,6% | = rodada 8 acima |
-| 2 | Depois — 1ª rodada PITest | JDK 21 | 171/174 | 98,3% | 0 NO_COVERAGE; 3 SURVIVED, todos documentados como fora de escopo |
-| 3 | Depois — 2ª rodada PITest | JDK 21 | 171/174 | 98,3% | idêntico mutante a mutante à rodada 2 (mesmos 3 sobreviventes, mesmo mutador cada um) |
+| ~~2~~ | ~~Depois — 1ª rodada PITest~~ | ~~JDK 21~~ | ~~171/174~~ | ~~98,3%~~ | **errado** — `target/classes` sujo, ver correção abaixo |
+| ~~3~~ | ~~Depois — 2ª rodada PITest~~ | ~~JDK 21~~ | ~~171/174~~ | ~~98,3%~~ | **errado**, mesma causa (idêntico mutante a mutante à rodada 2, o que mascarou o problema: parecia determinístico porque o build sujo era o mesmo nas duas) |
+| 4 | Depois — 1ª rodada PITest, `mvn clean` antes | JDK 21 | **167/170** | **98,2%** | 0 NO_COVERAGE; 3 SURVIVED, todos documentados como fora de escopo |
+| 5 | Depois — 2ª rodada PITest, `mvn clean` antes | JDK 21 | **167/170** | **98,2%** | idêntico mutante a mutante à rodada 4 (mesmos 3 sobreviventes, mesmo mutador cada um) |
+| 6 | Verificação — baseline (`9a389db`) numa worktree Git limpa | JDK 21 | 137/170 | 80,6% | confirma que o total de mutantes do baseline é 170, não 174 — reproduzido do zero, sem depender do estado de `target/` da máquina de desenvolvimento |
 
-Nota: o total de mutantes gerados subiu de 170 (baseline) para 174 — já
-confirmado nas duas rodadas desta seção como estável, não é ruído; é o
-próprio código de produção que não mudou gerando um mutante a mais em 4
-pontos por uma diferença de contagem do PITest entre o ambiente da rodada 8
-e o desta verificação (mesma versão de ferramenta e JDK; não investigado a
-fundo por não afetar nenhuma decisão de teste).
+> **Correção de metodologia (2026-10-19, mesmo dia):** as rodadas 2 e 3
+> reportavam 174 mutantes gerados, 4 a mais que o baseline (170) — uma
+> divergência que não deveria existir, já que nenhuma classe de produção
+> foi alterada nesta equalização (o total de mutantes depende só do
+> bytecode de produção). Investigado: o `target/classes` desta máquina
+> acumulava bytecode recompilado incrementalmente por ferramentas da IDE
+> entre sessões, sem `mvn clean` antes das medições de PITest — um build
+> sujo. Confirmado rodando `mvn clean test` / `mvn clean
+> org.pitest:pitest-maven:mutationCoverage` tanto na branch desta
+> equalização quanto numa **worktree Git separada** a partir do commit
+> baseline (rodada 6): o total correto nos dois estados é 170, consistente
+> com o valor histórico. As rodadas 4 e 5 (com `clean`) são as válidas; as
+> rodadas 2 e 3 ficam riscadas acima, não apagadas — eram reproduzíveis
+> *dentro do ambiente contaminado*, então documentar o erro é mais
+> informativo que escondê-lo. Os 3 mutantes `SURVIVED` são idênticos em
+> todas as rodadas (contaminadas ou não) — o erro afetava só o
+> denominador, nenhuma conclusão sobre quais mutantes sobrevivem muda.
+> **Lição operacional:** a partir de agora, toda medição de PITest/JaCoCo
+> neste projeto roda com `mvn clean` antes, nunca incremental.
 
-Test strength (mortos ÷ alcançados, exclui NO_COVERAGE): 171/174 = 98,3%
+Test strength (mortos ÷ alcançados, exclui NO_COVERAGE): 167/170 = 98,2%
 (antes: 137/143 = 95,8%).
 
 ### Violações Arquiteturais (ArchUnit)
 
-| # | Momento | Regras | Violações ativas | Violações documentadas (escopo) |
+| # | Momento | Regras | Violações | Observação |
 |---|---|---|---|---|
 | 1 | Antes | 7 | 0 | — |
-| 2 | Depois | **10** (3 novas, paridade com microsserviços) | 0 | **8** (5 em `controllersShouldNotDependOnEntities`, 3 em `repositoriesShouldOnlyBeAccessedByServices`) |
+| ~~2~~ | ~~Depois (1ª versão)~~ | ~~10~~ | ~~0 ativas, 8 documentadas~~ | **metodologia questionada** — ver correção abaixo |
+| 3 | Depois (corrigido) | **10** | **8** (5 + 3), pinadas por asserção, regras sem exceção de escopo | ver `monolito-violacoes-arquiteturais.md` |
 
-As 8 violações documentadas são reais (confirmadas rodando as regras sem o
-escopo de exceção, ver `monolito-violacoes-arquiteturais.md`) e batem
-exatamente com o resultado já previsto no prompt antes de qualquer teste ser
-escrito. Nenhuma correção de produção foi feita; a exceção fica registrada
-no próprio código da regra (`ParityArchitectureRulesTest`), mesmo padrão já
-usado em `DomainBoundaryArchitectureTest`.
+> **Correção de metodologia (2026-10-19, revisão independente):** a
+> primeira versão das 2 regras novas com violação real
+> (`repositoriesShouldOnlyBeAccessedByServices`,
+> `controllersShouldNotDependOnEntities`) embutia uma exceção de escopo no
+> próprio predicado da regra (pacote `security` incluído na lista de
+> acesso permitido; entidade `User` excluída do alvo), chegando a "0
+> violações ativas em 10 regras". Uma revisão independente apontou que isso
+> contraria a instrução de não afrouxar regra do ArchUnit para o teste
+> passar, e torna o "0" do monólito incomparável com o "0" da versão em
+> microsserviços — que aplica a mesma regra sem nenhuma exceção. **Corrigido**:
+> as regras voltaram a ser estritas (idênticas à versão em microsserviços);
+> os dois testes agora avaliam a regra manualmente
+> (`ArchRule#evaluate(JavaClasses)`) e fixam o número exato de violações
+> conhecidas (5 e 3) via `assertThat(...).hasSize(N)`, em vez de depender
+> do runner `@ArchTest` padrão (que falharia a suíte em qualquer violação).
+> A suíte continua verde porque o número documentado bate com o real, não
+> porque a regra deixou de enxergar a violação. As 8 violações em si (quais
+> classes, quantas ocorrências) não mudaram — só a forma como a suíte as
+> representa. Ver `monolito-violacoes-arquiteturais.md` para o detalhe
+> completo.
 
 ### Alterações em código de produção
 
@@ -169,6 +200,6 @@ controller, arquitetura) ou de teste existente reforçado.
 ## Como reproduzir
 
 ```bash
-mvn test                                          # testes + JaCoCo
-mvn org.pitest:pitest-maven:mutationCoverage      # PITest
+mvn clean test                                          # testes + JaCoCo — "clean" não é opcional, ver nota acima
+mvn clean org.pitest:pitest-maven:mutationCoverage      # PITest
 ```
