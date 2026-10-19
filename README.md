@@ -267,3 +267,25 @@ com.pucpr.tcc.monolith
 2. Inclui `Authorization: Bearer <token>` em cada requisição
 3. `JwtAuthenticationFilter` intercepta, valida o token e injeta a autenticação no `SecurityContext`
 4. Controllers recebem o usuário via `@AuthenticationPrincipal User currentUser`
+
+---
+
+## Testes e métricas
+
+Suíte de testes (JUnit 5 + Mockito + AssertJ + `@WebMvcTest` + ArchUnit),
+equalizada com o mesmo critério da versão em microsserviços:
+
+| Métrica | Valor |
+|---|---|
+| Testes (JUnit 5) | **180/180**, 0 falhas — 33 entidade, 33 service (Mockito), 40 controller (`@WebMvcTest`), 26 security, 9 exception handler, 10 arquitetura (ArchUnit), 29 integração (`@SpringBootTest`) |
+| Branch Coverage (JaCoCo) | **97,6%** (41/42) |
+| Mutation Score (PITest) | **98,3%** (171/174 mortos, 0 sem cobertura) |
+| Violações arquiteturais (ArchUnit) | **0/10** regras ativas (8 violações reais documentadas, não corrigidas — ver `docs/reports/monolito-violacoes-arquiteturais.md`) |
+
+```bash
+./mvnw test                                        # testes + JaCoCo (target/site/jacoco/index.html)
+./mvnw org.pitest:pitest-maven:mutationCoverage     # PITest (target/pit-reports/index.html)
+```
+
+Relatórios completos em [`docs/reports/`](./docs/reports/README.md) —
+comece por [`monolito-testes-unitarios.md`](./docs/reports/monolito-testes-unitarios.md).

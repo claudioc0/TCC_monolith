@@ -3,6 +3,7 @@ package com.pucpr.tcc.monolith.users.service;
 import com.pucpr.tcc.monolith.security.JwtService;
 import com.pucpr.tcc.monolith.users.dto.LoginRequest;
 import com.pucpr.tcc.monolith.users.dto.RegisterRequest;
+import com.pucpr.tcc.monolith.users.dto.UserResponse;
 import com.pucpr.tcc.monolith.users.entity.User;
 import com.pucpr.tcc.monolith.users.entity.UserRole;
 import com.pucpr.tcc.monolith.users.repository.UserRepository;
@@ -16,6 +17,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -95,5 +97,66 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.findById(99L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Usuário não encontrado");
+    }
+
+    @Test
+    @DisplayName("findById deve mapear o usuário encontrado para UserResponse")
+    void findByIdShouldReturnMappedResponseWhenFound() {
+        User user = new User("João", "joao@email.com", "$2a$hashed", UserRole.CUSTOMER);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        UserResponse response = userService.findById(1L);
+
+        assertThat(response.name()).isEqualTo("João");
+        assertThat(response.email()).isEqualTo("joao@email.com");
+        assertThat(response.role()).isEqualTo("CUSTOMER");
+    }
+
+    @Test
+    @DisplayName("findAll deve mapear todos os usuários retornados pelo repositório")
+    void findAllShouldReturnMappedListOfUsers() {
+        User joao = new User("João", "joao@email.com", "$2a$hashed", UserRole.CUSTOMER);
+        User admin = new User("Admin", "admin@tcc.com", "$2a$hashed", UserRole.ADMIN);
+        when(userRepository.findAll()).thenReturn(List.of(joao, admin));
+
+        List<UserResponse> responses = userService.findAll();
+
+        assertThat(responses)
+                .hasSize(2)
+                .extracting(UserResponse::email)
+                .containsExactly("joao@email.com", "admin@tcc.com");
+    }
+
+    @Test
+    @DisplayName("delete deve remover o usuário quando ele existe")
+    void deleteShouldRemoveWhenUserExists() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        userService.delete(1L);
+
+        verify(userRepository).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("delete deve lançar exceção e não remover quando o usuário não existe")
+    void deleteShouldThrowAndNotRemoveWhenUserDoesNotExist() {
+        when(userRepository.existsById(99L)).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.delete(99L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Usuário não encontrado");
+
+        verify(userRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("login deve lançar IllegalStateException se o usuário sumir após autenticar")
+    void loginShouldThrowIllegalStateWhenUserMissingAfterAuthentication() {
+        when(userRepository.findByEmail("joao@email.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                userService.login(new LoginRequest("joao@email.com", "senha123")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Usuário não encontrado após autenticação");
     }
 }

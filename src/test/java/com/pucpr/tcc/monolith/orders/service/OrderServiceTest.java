@@ -107,4 +107,16 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.findById(99L))
                 .isInstanceOf(OrderNotFoundException.class);
     }
+
+    @Test
+    @DisplayName("findById deve mapear o pedido encontrado para OrderResponse")
+    void findByIdShouldReturnMappedResponseWhenFound() {
+        Order order = new Order(1L);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        var response = orderService.findById(1L);
+
+        assertThat(response.userId()).isEqualTo(1L);
+        assertThat(response.status()).isEqualTo(OrderStatus.PENDENTE);
+    }
 }

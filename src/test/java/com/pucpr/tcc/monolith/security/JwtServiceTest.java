@@ -71,4 +71,14 @@ class JwtServiceTest {
     void isTokenValidShouldReturnFalseForMalformedToken() {
         assertThat(jwtService.isTokenValid("token.invalido.aqui", user)).isFalse();
     }
+
+    @Test
+    @DisplayName("generateToken com claims extras deve embutir as claims no token gerado")
+    void generateTokenWithExtraClaimsShouldEmbedThemInToken() {
+        String token = jwtService.generateToken(java.util.Map.of("role", "ADMIN"), user);
+
+        assertThat(token).isNotBlank();
+        assertThat(jwtService.extractUsername(token)).isEqualTo("joao@test.com");
+        assertThat(jwtService.isTokenValid(token, user)).isTrue();
+    }
 }

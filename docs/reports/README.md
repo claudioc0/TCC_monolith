@@ -14,8 +14,25 @@ a cada `mvn clean`) — esta pasta é uma cópia manual do estado mais recente.
 > ver `mutation-score.md`. Violações arquiteturais foram conferidas de forma
 > independente também, sem divergência.
 
+> **Equalização da suíte de testes (2026-10-19):** a suíte do monólito foi
+> elevada ao mesmo critério de teste da versão microsserviços (slices
+> `@WebMvcTest`, reforço de Service, paridade de regras ArchUnit) — ver os
+> quatro `monolito-*.md` abaixo para o estado **novo** (180 testes, 97,6%
+> branch coverage, 98,3% mutation score, 10 regras ArchUnit). Os arquivos
+> sem o prefixo `monolito-` (`cobertura-codigo.md`, `mutation-score.md`,
+> `violacoes-arquiteturais.md`) continuam valendo como registro do estado
+> **anterior** (98 testes) — não foram sobrescritos.
+
 ## Conteúdo
 
+- **[`monolito-testes-unitarios.md`](./monolito-testes-unitarios.md)**,
+  **[`monolito-cobertura-codigo.md`](./monolito-cobertura-codigo.md)**,
+  **[`monolito-mutation-score.md`](./monolito-mutation-score.md)**,
+  **[`monolito-violacoes-arquiteturais.md`](./monolito-violacoes-arquiteturais.md)** —
+  os quatro relatórios do estado **pós-equalização**: 180 testes (98 → 180),
+  branch coverage 97,6% (81,0% → 97,6%), mutation score 98,3% (80,6% →
+  98,3%), 10 regras ArchUnit (7 → 10, 0 violações ativas, 8 documentadas).
+  Comece por `monolito-testes-unitarios.md`.
 - **[`resultados-finais.md`](./resultados-finais.md)** — ponto único de
   consulta: os quatro números atuais lado a lado, linhagem de cada um
   (valor errado → correção → valor final), ameaças à validade em aberto e

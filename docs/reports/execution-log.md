@@ -101,6 +101,71 @@ Ver [`resultados-finais.md`](./resultados-finais.md) para a linhagem
 completa de cada número (valor errado → correção → valor final) e o estado
 das ameaças à validade.
 
+## Equalização da suíte de testes com a versão microsserviços (2026-10-19)
+
+Trabalho feito em branch própria (`feature/equalizacao-testes-monolito`,
+a partir do commit `9a389db`), seguindo o protocolo descrito em
+`prompt-testes-monolito.md`: elevar o monólito ao mesmo critério de teste já
+aplicado nos microsserviços (slices de Controller, reforço de Service,
+paridade de regras ArchUnit), sem alterar código de produção. Os valores
+"Antes" desta seção são o próprio estado de referência registrado acima
+(rodada 8: 98 testes, 81,0% branch, 80,6% mutation, 0/7 ArchUnit).
+
+### Testes (JUnit 5)
+
+| # | Momento | Testes | Falhas | Erros | Resultado |
+|---|---|---|---|---|---|
+| 1 | Antes (baseline, = rodada 8 acima) | 98 | 0 | 0 | BUILD SUCCESS |
+| 2 | Depois — 1ª execução | 180 | 0 | 0 | BUILD SUCCESS |
+| 3 | Depois — 2ª execução | 180 | 0 | 0 | BUILD SUCCESS |
+| 4 | Depois — 3ª execução | 180 | 0 | 0 | BUILD SUCCESS |
+
+Determinismo: 180/180 idêntico nas três execuções consecutivas.
+
+### Branch Coverage (JaCoCo)
+
+| # | Momento | Cobertura | Observação |
+|---|---|---|---|
+| 1 | Antes | 81,0% (34/42) | baseline |
+| 2 | Depois | **97,6% (41/42)** | só falta `JwtService#isTokenExpired` (ver `monolito-cobertura-codigo.md`) |
+
+### Mutation Score (PITest)
+
+| # | Momento | Ambiente | Mortos | Score | Observação |
+|---|---|---|---|---|---|
+| 1 | Antes (baseline) | JDK 21 | 137/170 | 80,6% | = rodada 8 acima |
+| 2 | Depois — 1ª rodada PITest | JDK 21 | 171/174 | 98,3% | 0 NO_COVERAGE; 3 SURVIVED, todos documentados como fora de escopo |
+| 3 | Depois — 2ª rodada PITest | JDK 21 | 171/174 | 98,3% | idêntico mutante a mutante à rodada 2 (mesmos 3 sobreviventes, mesmo mutador cada um) |
+
+Nota: o total de mutantes gerados subiu de 170 (baseline) para 174 — já
+confirmado nas duas rodadas desta seção como estável, não é ruído; é o
+próprio código de produção que não mudou gerando um mutante a mais em 4
+pontos por uma diferença de contagem do PITest entre o ambiente da rodada 8
+e o desta verificação (mesma versão de ferramenta e JDK; não investigado a
+fundo por não afetar nenhuma decisão de teste).
+
+Test strength (mortos ÷ alcançados, exclui NO_COVERAGE): 171/174 = 98,3%
+(antes: 137/143 = 95,8%).
+
+### Violações Arquiteturais (ArchUnit)
+
+| # | Momento | Regras | Violações ativas | Violações documentadas (escopo) |
+|---|---|---|---|---|
+| 1 | Antes | 7 | 0 | — |
+| 2 | Depois | **10** (3 novas, paridade com microsserviços) | 0 | **8** (5 em `controllersShouldNotDependOnEntities`, 3 em `repositoriesShouldOnlyBeAccessedByServices`) |
+
+As 8 violações documentadas são reais (confirmadas rodando as regras sem o
+escopo de exceção, ver `monolito-violacoes-arquiteturais.md`) e batem
+exatamente com o resultado já previsto no prompt antes de qualquer teste ser
+escrito. Nenhuma correção de produção foi feita; a exceção fica registrada
+no próprio código da regra (`ParityArchitectureRulesTest`), mesmo padrão já
+usado em `DomainBoundaryArchitectureTest`.
+
+### Alterações em código de produção
+
+Nenhuma. Toda a equalização veio de teste novo (entidade, service, slice de
+controller, arquitetura) ou de teste existente reforçado.
+
 ## Como reproduzir
 
 ```bash

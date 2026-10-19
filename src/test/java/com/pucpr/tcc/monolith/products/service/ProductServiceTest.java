@@ -113,4 +113,75 @@ class ProductServiceTest {
 
         assertThat(product.getStockQuantity()).isEqualTo(15);
     }
+
+    @Test
+    @DisplayName("searchByName deve retornar os produtos cujo nome contém o termo buscado")
+    void searchByNameShouldReturnMatchingProducts() {
+        when(productRepository.findByNameContainingIgnoreCase("note"))
+                .thenReturn(java.util.List.of(product));
+
+        var response = productService.searchByName("note");
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).name()).isEqualTo("Notebook");
+    }
+
+    @Test
+    @DisplayName("searchByName deve retornar lista vazia quando nenhum produto corresponde")
+    void searchByNameShouldReturnEmptyListWhenNoMatch() {
+        when(productRepository.findByNameContainingIgnoreCase("inexistente"))
+                .thenReturn(java.util.List.of());
+
+        var response = productService.searchByName("inexistente");
+
+        assertThat(response).isEmpty();
+    }
+
+    @Test
+    @DisplayName("update deve sobrescrever todos os campos do produto e retornar o DTO atualizado")
+    void updateShouldOverwriteAllFieldsAndReturnResponse() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(any())).thenReturn(product);
+        var request = new ProductRequest("Notebook Pro", "Novo descrição", new BigDecimal("4200.00"), 5);
+
+        var response = productService.update(1L, request);
+
+        assertThat(response.name()).isEqualTo("Notebook Pro");
+        assertThat(response.description()).isEqualTo("Novo descrição");
+        assertThat(response.price()).isEqualByComparingTo("4200.00");
+        assertThat(response.stockQuantity()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("update deve lançar ProductNotFoundException para id inexistente")
+    void updateShouldThrowForUnknownId() {
+        when(productRepository.findById(99L)).thenReturn(Optional.empty());
+        var request = new ProductRequest("X", "Y", BigDecimal.TEN, 1);
+
+        assertThatThrownBy(() -> productService.update(99L, request))
+                .isInstanceOf(ProductNotFoundException.class);
+
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("delete deve remover o produto quando ele existe")
+    void deleteShouldRemoveWhenProductExists() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        productService.delete(1L);
+
+        verify(productRepository).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("delete deve lançar ProductNotFoundException e não remover quando o produto não existe")
+    void deleteShouldThrowAndNotRemoveForUnknownId() {
+        when(productRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.delete(99L))
+                .isInstanceOf(ProductNotFoundException.class);
+
+        verify(productRepository, never()).deleteById(any());
+    }
 }

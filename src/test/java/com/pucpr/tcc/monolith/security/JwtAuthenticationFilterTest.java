@@ -92,10 +92,52 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    @DisplayName("doFilterInternal com header sem prefixo Bearer deve seguir sem autenticar")
+    void doFilterInternalWithoutBearerPrefixShouldSkipAuthentication() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Basic dXNlcjpwYXNz");
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain).doFilter(request, response);
+        verifyNoInteractions(jwtService);
+    }
+
+    @Test
+    @DisplayName("doFilterInternal não deve sobrescrever uma autenticação já presente no contexto")
+    void doFilterInternalShouldNotOverwriteExistingAuthentication() throws Exception {
+        var existingAuth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "ja-autenticado", null, java.util.List.of());
+        SecurityContextHolder.getContext().setAuthentication(existingAuth);
+
+        when(request.getHeader("Authorization")).thenReturn("Bearer token.valido.aqui");
+        when(jwtService.extractUsername("token.valido.aqui")).thenReturn("maria@test.com");
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(existingAuth);
+        verify(filterChain).doFilter(request, response);
+        verifyNoInteractions(userDetailsService);
+    }
+
+    @Test
     @DisplayName("doFilterInternal com token malformado deve seguir sem autenticar")
     void doFilterInternalWithMalformedTokenShouldSkipAuthentication() throws Exception {
         when(request.getHeader("Authorization")).thenReturn("Bearer token.invalido");
         when(jwtService.extractUsername("token.invalido")).thenThrow(new RuntimeException("malformed"));
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain).doFilter(request, response);
+        verifyNoInteractions(userDetailsService);
+    }
+
+    @Test
+    @DisplayName("doFilterInternal deve seguir sem autenticar quando extractUsername retorna null sem lançar exceção")
+    void doFilterInternalWithNullUsernameShouldSkipAuthentication() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token.sem.subject");
+        when(jwtService.extractUsername("token.sem.subject")).thenReturn(null);
 
         filter.doFilterInternal(request, response, filterChain);
 
